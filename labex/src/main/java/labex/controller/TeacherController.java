@@ -132,6 +132,13 @@ public class TeacherController {
         return Result.ok();
     }
 
+    @PostMapping("/students/import-csv")
+    public Result<Map<String, Object>> importStudentsCsv(@RequestParam("file") MultipartFile file, HttpSession session) throws Exception {
+        verifyTeacher(session);
+        int count = teacherService.importStudentsFromCsv(file);
+        return Result.ok(Map.of("count", count));
+    }
+
     // ===== Experiment Management =====
 
     @GetMapping("/experiments")

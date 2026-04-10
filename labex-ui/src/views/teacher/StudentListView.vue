@@ -6,6 +6,9 @@
         <el-select v-model="clazzNo" placeholder="筛选班级" clearable @change="loadData" style="width: 150px; margin-right: 10px">
           <el-option v-for="c in classes" :key="c.no" :label="c.no" :value="c.no" />
         </el-select>
+        <el-upload :show-file-list="false" accept=".csv" :before-upload="handleCsvImport" style="display: inline-block; margin-right: 10px">
+          <el-button>导入CSV</el-button>
+        </el-upload>
         <el-button type="primary" @click="showAddDialog">新增学生</el-button>
       </div>
     </div>
@@ -140,5 +143,18 @@ async function handleResetPassword(id) {
   await ElMessageBox.confirm('确定将该学生密码重置为 123456？', '提示', { type: 'warning' })
   await api.resetPassword(id)
   ElMessage.success('密码已重置为 123456')
+}
+
+async function handleCsvImport(file) {
+  const formData = new FormData()
+  formData.append('file', file)
+  try {
+    const res = await api.importStudentsCsv(formData)
+    ElMessage.success(`成功导入 ${res.data.count} 名学生`)
+    loadData()
+  } catch (e) {
+    ElMessage.error('导入失败')
+  }
+  return false
 }
 </script>

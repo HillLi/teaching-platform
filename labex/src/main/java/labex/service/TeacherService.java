@@ -8,7 +8,11 @@ import labex.mapper.*;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -133,6 +137,37 @@ public class TeacherService {
         student.setStudentPassword(passwordEncoder.encode("123456"));
         student.setError(0);
         studentMapper.updateById(student);
+    }
+
+    public int importStudentsFromCsv(MultipartFile file) throws Exception {
+        BufferedReader reader = new BufferedReader(
+                new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8));
+        String line = reader.readLine(); // Skip header
+        int count = 0;
+        while ((line = reader.readLine()) != null) {
+            String[] parts = line.split(",");
+            if (parts.length < 2) continue;
+            String studentNo = parts[0].trim();
+            String studentName = parts[1].trim();
+            if (studentNo.isEmpty() || studentName.isEmpty()) continue;
+
+            Student existing = studentMapper.selectOne(
+                    new QueryWrapper<Student>().eq("student_no", studentNo));
+            if (existing == null) {
+                Student s = new Student();
+                s.setStudentNo(studentNo);
+                s.setStudentName(studentName);
+                s.setStudentPassword(passwordEncoder.encode("123456"));
+                s.setState(1);
+                s.setError(0);
+                if (parts.length > 2 && !parts[2].trim().isEmpty()) {
+                    s.setClazzNo(parts[2].trim());
+                }
+                studentMapper.insert(s);
+                count++;
+            }
+        }
+        return count;
     }
 
     // ===== Experiment Management =====

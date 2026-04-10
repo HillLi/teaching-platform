@@ -16,6 +16,7 @@ export default {
   deleteStudent(id) { return request.delete(`/api/teacher/students/${id}`) },
   importStudents(data) { return request.post('/api/teacher/students/import', data) },
   resetPassword(id) { return request.put(`/api/teacher/students/${id}/reset-password`) },
+  importStudentsCsv(formData) { return request.post('/api/teacher/students/import-csv', formData, { headers: { 'Content-Type': 'multipart/form-data' } }) },
 
   // Experiments
   listExperiments() { return request.get('/api/teacher/experiments') },
