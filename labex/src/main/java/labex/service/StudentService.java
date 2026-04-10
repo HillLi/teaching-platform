@@ -57,6 +57,12 @@ public class StudentService {
                         .orderByAsc("experiment_item_no"));
     }
 
+    public ExperimentItem getExperimentItemById(Integer itemId) {
+        ExperimentItem item = experimentItemMapper.selectById(itemId);
+        if (item == null) throw new BusinessException("题目不存在");
+        return item;
+    }
+
     public StudentItem getStudentItem(Integer itemId, Integer studentId) {
         return studentItemMapper.selectOne(
                 new QueryWrapper<StudentItem>()

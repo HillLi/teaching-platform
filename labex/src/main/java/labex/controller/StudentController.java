@@ -65,11 +65,11 @@ public class StudentController {
     @GetMapping("/items/{itemId}")
     public Result<Map<String, Object>> getItem(@PathVariable Integer itemId, HttpSession session) {
         UserTokenVO token = verifyStudent(session);
-        ExperimentItem item = new ExperimentItem(); // We need to get the item
+        ExperimentItem item = studentService.getExperimentItemById(itemId);
         StudentItem si = studentService.getStudentItem(itemId, token.getUserId());
         return Result.ok(Map.of(
-                "item", itemId,
-                "studentItem", si != null ? si : "null"
+                "item", item,
+                "studentItem", si != null ? si : ""
         ));
     }
 
