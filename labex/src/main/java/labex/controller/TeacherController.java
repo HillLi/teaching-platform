@@ -1,5 +1,6 @@
 package labex.controller;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import labex.common.Result;
 import labex.dto.ScoreDTO;
@@ -10,6 +11,8 @@ import labex.service.TeacherService;
 import labex.service.LogService;
 import labex.entity.StudentLog;
 import labex.entity.SysLog;
+import labex.entity.SysConfig;
+import labex.mapper.SysConfigMapper;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
@@ -26,13 +29,15 @@ public class TeacherController {
 
     private final TeacherService teacherService;
     private final LogService logService;
+    private final SysConfigMapper sysConfigMapper;
 
     @Value("${labex.upload.lecture-path}")
     private String lecturePath;
 
-    public TeacherController(TeacherService teacherService, LogService logService) {
+    public TeacherController(TeacherService teacherService, LogService logService, SysConfigMapper sysConfigMapper) {
         this.teacherService = teacherService;
         this.logService = logService;
+        this.sysConfigMapper = sysConfigMapper;
     }
 
     private void verifyTeacher(HttpSession session) {
@@ -319,5 +324,22 @@ public class TeacherController {
     public Result<List<StudentLog>> getStudentLogs(@PathVariable Integer id, HttpSession session) {
         verifyTeacher(session);
         return Result.ok(logService.listStudentLogs(id));
+    }
+
+    // ===== Config =====
+
+    @GetMapping("/config")
+    public Result<List<SysConfig>> listConfig(HttpSession session) {
+        verifyTeacher(session);
+        return Result.ok(sysConfigMapper.selectList(new QueryWrapper<>()));
+    }
+
+    @PutMapping("/config")
+    public Result<Void> updateConfig(@RequestBody List<SysConfig> configs, HttpSession session) {
+        verifyTeacher(session);
+        for (SysConfig config : configs) {
+            sysConfigMapper.updateById(config);
+        }
+        return Result.ok();
     }
 }

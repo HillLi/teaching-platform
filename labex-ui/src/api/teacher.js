@@ -57,4 +57,8 @@ export default {
   // Logs
   listLogs(params) { return request.get('/api/teacher/logs', { params }) },
   getStudentLogs(id) { return request.get(`/api/teacher/students/${id}/logs`) },
+
+  // Config
+  listConfig() { return request.get('/api/teacher/config') },
+  updateConfig(configs) { return request.put('/api/teacher/config', configs) },
 }
