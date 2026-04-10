@@ -2,7 +2,25 @@
   <div>
     <h2>我的实验</h2>
     <el-row :gutter="20" style="margin-top: 20px">
+      <el-col :span="8">
+        <el-card shadow="hover">
+          <el-statistic title="总实验数" :value="stats.totalExperiments || 0" />
+        </el-card>
+      </el-col>
+      <el-col :span="8">
+        <el-card shadow="hover">
+          <el-statistic title="已完成" :value="stats.completedExperiments || 0" />
+        </el-card>
+      </el-col>
+      <el-col :span="8">
+        <el-card shadow="hover">
+          <el-statistic title="平均分" :value="stats.averageScore || 0" />
+        </el-card>
+      </el-col>
+    </el-row>
+    <el-row :gutter="20" style="margin-top: 20px">
       <el-col :span="16">
+        <h3>实验列表</h3>
         <el-table :data="experiments" border stripe>
           <el-table-column prop="experimentNo" label="编号" width="80" />
           <el-table-column prop="experimentName" label="实验名称" />
@@ -35,11 +53,17 @@ import api from '../../api/student'
 const router = useRouter()
 const experiments = ref([])
 const scores = ref([])
+const stats = ref({})
 
 onMounted(async () => {
-  const [expRes, scoreRes] = await Promise.all([api.listExperiments(), api.getMyScores()])
+  const [expRes, scoreRes, statsRes] = await Promise.all([
+    api.listExperiments(),
+    api.getMyScores(),
+    api.dashboardStats().catch(() => ({ data: {} }))
+  ])
   experiments.value = expRes.data
   scores.value = scoreRes.data
+  stats.value = statsRes.data
 })
 
 function goToExperiment(id) {

@@ -15,4 +15,7 @@ export default {
   listExercises() { return request.get('/api/student/exercises') },
   getExerciseItems(id) { return request.get(`/api/student/exercises/${id}/items`) },
   submitExerciseAnswer(data) { return request.post('/api/student/exercises/answer', data) },
+
+  // Dashboard
+  dashboardStats() { return request.get('/api/student/dashboard/stats') },
 }
