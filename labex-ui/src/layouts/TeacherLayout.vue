@@ -29,6 +29,9 @@
         <el-menu-item index="/teacher/exercises">
           <el-icon><Notebook /></el-icon><span>练习管理</span>
         </el-menu-item>
+        <el-menu-item index="/teacher/questions">
+          <el-icon><Collection /></el-icon><span>题库管理</span>
+        </el-menu-item>
       </el-menu>
     </el-aside>
     <el-container>
