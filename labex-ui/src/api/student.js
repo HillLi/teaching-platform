@@ -10,4 +10,9 @@ export default {
   listLectures() { return request.get('/api/student/lectures') },
   downloadLecture(id) { return `/api/student/lectures/${id}/download` },
   changePassword(oldPassword, newPassword) { return request.put('/api/student/password', { oldPassword, newPassword }) },
+
+  // Exercises
+  listExercises() { return request.get('/api/student/exercises') },
+  getExerciseItems(id) { return request.get(`/api/student/exercises/${id}/items`) },
+  submitExerciseAnswer(data) { return request.post('/api/student/exercises/answer', data) },
 }

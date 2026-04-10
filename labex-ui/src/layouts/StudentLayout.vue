@@ -8,6 +8,9 @@
         <el-menu-item index="/student">
           <el-icon><HomeFilled /></el-icon><span>我的实验</span>
         </el-menu-item>
+        <el-menu-item index="/student/exercises">
+          <el-icon><Notebook /></el-icon><span>练习中心</span>
+        </el-menu-item>
         <el-menu-item index="/student/lectures">
           <el-icon><FolderOpened /></el-icon><span>讲义下载</span>
         </el-menu-item>

@@ -35,6 +35,8 @@ const routes = [
       { path: 'answer/:itemId', name: 'StudentAnswer', component: () => import('../views/student/AnswerView.vue') },
       { path: 'lectures', name: 'StudentLectures', component: () => import('../views/student/LectureListView.vue') },
       { path: 'password', name: 'StudentPassword', component: () => import('../views/student/PasswordView.vue') },
+      { path: 'exercises', name: 'StudentExercises', component: () => import('../views/student/ExerciseListView.vue') },
+      { path: 'exercises/:id', name: 'StudentExerciseDetail', component: () => import('../views/student/ExerciseView.vue') },
     ]
   },
   { path: '/', redirect: '/login' }
