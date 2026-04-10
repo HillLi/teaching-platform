@@ -9,10 +9,11 @@
       <el-table-column prop="name" label="练习名称" />
       <el-table-column prop="description" label="描述" />
       <el-table-column prop="type" label="类型" width="80" />
-      <el-table-column label="操作" width="200">
+      <el-table-column label="操作" width="250">
         <template #default="{ row }">
           <el-button size="small" @click="viewItems(row)">题目</el-button>
           <el-button size="small" @click="editExercise(row)">编辑</el-button>
+          <el-button size="small" type="danger" @click="handleDelete(row.id)">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -63,7 +64,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import api from '../../api/teacher'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 
 const exercises = ref([])
 const dialogVisible = ref(false)
@@ -119,5 +120,12 @@ async function saveItem() {
   itemForm.value = { question: '', options: '', answer: '', type: 1 }
   const res = await api.getExerciseItems(currentExId.value)
   items.value = res.data
+}
+
+async function handleDelete(id) {
+  await ElMessageBox.confirm('确定删除该练习？', '提示', { type: 'warning' })
+  await api.deleteExercise(id)
+  ElMessage.success('删除成功')
+  loadData()
 }
 </script>

@@ -42,6 +42,11 @@ public class ExerciseService {
         ex3Mapper.updateById(ex);
     }
 
+    public void deleteExercise(Integer id) {
+        ex3ItemMapper.delete(new QueryWrapper<Ex3Item>().eq("excercise_id", id));
+        ex3Mapper.deleteById(id);
+    }
+
     public List<Ex3Item> getExerciseItems(Integer exerciseId) {
         return ex3ItemMapper.selectList(
                 new QueryWrapper<Ex3Item>().eq("excercise_id", exerciseId));

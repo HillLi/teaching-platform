@@ -46,4 +46,6 @@ export default {
   addExercise(data) { return request.post('/api/teacher/exercises', data) },
   getExerciseItems(id) { return request.get(`/api/teacher/exercises/${id}/items`) },
   addExerciseItem(id, data) { return request.post(`/api/teacher/exercises/${id}/items`, data) },
+  updateExercise(id, data) { return request.put(`/api/teacher/exercises/${id}`, data) },
+  deleteExercise(id) { return request.delete(`/api/teacher/exercises/${id}`) },
 }

@@ -52,6 +52,12 @@ public class ExerciseController {
         return Result.ok();
     }
 
+    @DeleteMapping("/{id}")
+    public Result<Void> delete(@PathVariable Integer id, HttpSession session) {
+        exerciseService.deleteExercise(id);
+        return Result.ok();
+    }
+
     // Student answer endpoint
     @PostMapping("/answer")
     public Result<Void> answerQuestion(@RequestBody Map<String, Object> body, HttpSession session) {
