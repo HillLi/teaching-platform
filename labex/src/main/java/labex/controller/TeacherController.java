@@ -125,6 +125,13 @@ public class TeacherController {
         return Result.ok();
     }
 
+    @PutMapping("/students/{id}/reset-password")
+    public Result<Void> resetPassword(@PathVariable Integer id, HttpSession session) {
+        verifyTeacher(session);
+        teacherService.resetStudentPassword(id);
+        return Result.ok();
+    }
+
     // ===== Experiment Management =====
 
     @GetMapping("/experiments")

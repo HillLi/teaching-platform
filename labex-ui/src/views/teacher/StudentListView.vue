@@ -19,10 +19,11 @@
         </template>
       </el-table-column>
       <el-table-column prop="ip" label="最后IP" width="150" />
-      <el-table-column label="操作" width="260">
+      <el-table-column label="操作" width="320">
         <template #default="{ row }">
           <el-button size="small" @click="editStudent(row)">编辑</el-button>
           <el-button size="small" @click="viewLogs(row)">日志</el-button>
+          <el-button size="small" type="warning" @click="handleResetPassword(row.studentId)">重置密码</el-button>
           <el-button size="small" type="danger" @click="handleDelete(row.studentId)">删除</el-button>
         </template>
       </el-table-column>
@@ -133,5 +134,11 @@ async function viewLogs(row) {
   } finally {
     logsLoading.value = false
   }
+}
+
+async function handleResetPassword(id) {
+  await ElMessageBox.confirm('确定将该学生密码重置为 123456？', '提示', { type: 'warning' })
+  await api.resetPassword(id)
+  ElMessage.success('密码已重置为 123456')
 }
 </script>

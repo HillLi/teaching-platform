@@ -6,6 +6,7 @@ import labex.common.BusinessException;
 import labex.entity.*;
 import labex.mapper.*;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -122,6 +123,16 @@ public class TeacherService {
                 studentMapper.insert(s);
             }
         }
+    }
+
+    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+
+    public void resetStudentPassword(Integer id) {
+        Student student = studentMapper.selectById(id);
+        if (student == null) throw new BusinessException("学生不存在");
+        student.setStudentPassword(passwordEncoder.encode("123456"));
+        student.setError(0);
+        studentMapper.updateById(student);
     }
 
     // ===== Experiment Management =====
