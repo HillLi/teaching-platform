@@ -274,4 +274,12 @@ public class TeacherController {
         teacherService.deleteLecture(id);
         return Result.ok();
     }
+
+    // ===== Dashboard =====
+
+    @GetMapping("/dashboard/stats")
+    public Result<Map<String, Object>> dashboardStats(HttpSession session) {
+        verifyTeacher(session);
+        return Result.ok(teacherService.getDashboardStats());
+    }
 }

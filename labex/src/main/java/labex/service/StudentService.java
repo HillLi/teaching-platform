@@ -8,9 +8,11 @@ import labex.entity.*;
 import labex.mapper.*;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -23,6 +25,7 @@ public class StudentService {
     private final StudentItemLogMapper studentItemLogMapper;
     private final LectureMapper lectureMapper;
     private final StudentMapper studentMapper;
+    private final JdbcTemplate jdbcTemplate;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     public StudentService(ExperimentMapper experimentMapper,
@@ -30,13 +33,15 @@ public class StudentService {
                           StudentItemMapper studentItemMapper,
                           StudentItemLogMapper studentItemLogMapper,
                           LectureMapper lectureMapper,
-                          StudentMapper studentMapper) {
+                          StudentMapper studentMapper,
+                          JdbcTemplate jdbcTemplate) {
         this.experimentMapper = experimentMapper;
         this.experimentItemMapper = experimentItemMapper;
         this.studentItemMapper = studentItemMapper;
         this.studentItemLogMapper = studentItemLogMapper;
         this.lectureMapper = lectureMapper;
         this.studentMapper = studentMapper;
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     public List<Experiment> listExperiments() {
@@ -134,5 +139,25 @@ public class StudentService {
 
         student.setStudentPassword(passwordEncoder.encode(newPassword));
         studentMapper.updateById(student);
+    }
+
+    // ===== Dashboard Stats =====
+
+    public Map<String, Object> getDashboardStats(Integer studentId) {
+        Map<String, Object> stats = new HashMap<>();
+        Long totalExps = experimentMapper.selectCount(new QueryWrapper<>());
+        stats.put("totalExperiments", totalExps);
+        Long completed = jdbcTemplate.queryForObject(
+                "SELECT COUNT(DISTINCT ei.experiment_id) FROM t_student_item si " +
+                "JOIN t_experiment_item ei ON si.item_id = ei.experiment_item_id " +
+                "WHERE si.student_id = ?", Long.class, studentId);
+        stats.put("completedExperiments", completed != null ? completed : 0);
+        List<Map<String, Object>> scores = studentMapper.selectStudentExperimentScore(studentId);
+        double avg = scores.stream()
+                .filter(m -> m.get("score") != null)
+                .mapToInt(m -> ((Number) m.get("score")).intValue())
+                .average().orElse(0.0);
+        stats.put("averageScore", Math.round(avg * 10.0) / 10.0);
+        return stats;
     }
 }

@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import labex.common.BusinessException;
 import labex.entity.*;
 import labex.mapper.*;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -21,11 +22,12 @@ public class TeacherService {
     private final StudentItemMapper studentItemMapper;
     private final StudentItemLogMapper studentItemLogMapper;
     private final LectureMapper lectureMapper;
+    private final JdbcTemplate jdbcTemplate;
 
     public TeacherService(ClassMapper classMapper, StudentMapper studentMapper,
                           ExperimentMapper experimentMapper, ExperimentItemMapper experimentItemMapper,
                           StudentItemMapper studentItemMapper, StudentItemLogMapper studentItemLogMapper,
-                          LectureMapper lectureMapper) {
+                          LectureMapper lectureMapper, JdbcTemplate jdbcTemplate) {
         this.classMapper = classMapper;
         this.studentMapper = studentMapper;
         this.experimentMapper = experimentMapper;
@@ -33,6 +35,7 @@ public class TeacherService {
         this.studentItemMapper = studentItemMapper;
         this.studentItemLogMapper = studentItemLogMapper;
         this.lectureMapper = lectureMapper;
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     // ===== Class Management =====
@@ -235,5 +238,17 @@ public class TeacherService {
 
     public void deleteLecture(Integer id) {
         lectureMapper.deleteById(id);
+    }
+
+    // ===== Dashboard Stats =====
+
+    public Map<String, Object> getDashboardStats() {
+        Map<String, Object> stats = new java.util.HashMap<>();
+        try { stats.put("studentInfo", jdbcTemplate.queryForMap("SELECT * FROM v_student_info")); } catch (Exception e) { stats.put("studentInfo", Map.of()); }
+        try { stats.put("clazzInfo", jdbcTemplate.queryForMap("SELECT * FROM v_clazz_info")); } catch (Exception e) { stats.put("clazzInfo", Map.of()); }
+        try { stats.put("answerDataInfo", jdbcTemplate.queryForMap("SELECT * FROM v_student_answer_data_info")); } catch (Exception e) { stats.put("answerDataInfo", Map.of()); }
+        try { stats.put("answerLogInfo", jdbcTemplate.queryForMap("SELECT * FROM v_student_answer_log_info")); } catch (Exception e) { stats.put("answerLogInfo", Map.of()); }
+        try { stats.put("sysLogInfo", jdbcTemplate.queryForMap("SELECT * FROM v_sys_log_info")); } catch (Exception e) { stats.put("sysLogInfo", Map.of()); }
+        return stats;
     }
 }

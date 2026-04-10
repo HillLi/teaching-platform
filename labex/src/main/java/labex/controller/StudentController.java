@@ -152,4 +152,12 @@ public class StudentController {
         exerciseService.answerQuestion(token.getUserId(), itemId, type, answer);
         return Result.ok();
     }
+
+    // ===== Dashboard =====
+
+    @GetMapping("/dashboard/stats")
+    public Result<Map<String, Object>> dashboardStats(HttpSession session) {
+        UserTokenVO token = verifyStudent(session);
+        return Result.ok(studentService.getDashboardStats(token.getUserId()));
+    }
 }
