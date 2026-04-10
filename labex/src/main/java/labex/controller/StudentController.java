@@ -7,6 +7,7 @@ import labex.dto.UserTokenVO;
 import labex.dto.AnswerDTO;
 import labex.entity.*;
 import labex.service.StudentService;
+import labex.service.ExerciseService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
@@ -27,12 +28,14 @@ import java.util.Map;
 public class StudentController {
 
     private final StudentService studentService;
+    private final ExerciseService exerciseService;
 
     @Value("${labex.upload.lecture-path}")
     private String lecturePath;
 
-    public StudentController(StudentService studentService) {
+    public StudentController(StudentService studentService, ExerciseService exerciseService) {
         this.studentService = studentService;
+        this.exerciseService = exerciseService;
     }
 
     private UserTokenVO verifyStudent(HttpSession session) {
@@ -123,6 +126,30 @@ public class StudentController {
     public Result<Void> changePassword(@RequestBody Map<String, String> body, HttpSession session) {
         UserTokenVO token = verifyStudent(session);
         studentService.changePassword(token.getUserId(), body.get("oldPassword"), body.get("newPassword"));
+        return Result.ok();
+    }
+
+    // ===== Exercises (Student) =====
+
+    @GetMapping("/exercises")
+    public Result<List<Ex3>> listExercises(HttpSession session) {
+        verifyStudent(session);
+        return Result.ok(exerciseService.listExercises());
+    }
+
+    @GetMapping("/exercises/{id}/items")
+    public Result<List<Ex3Item>> getExerciseItems(@PathVariable Integer id, HttpSession session) {
+        verifyStudent(session);
+        return Result.ok(exerciseService.getExerciseItems(id));
+    }
+
+    @PostMapping("/exercises/answer")
+    public Result<Void> answerExercise(@RequestBody Map<String, Object> body, HttpSession session) {
+        UserTokenVO token = verifyStudent(session);
+        Integer itemId = (Integer) body.get("itemId");
+        Integer type = (Integer) body.get("type");
+        String answer = (String) body.get("answer");
+        exerciseService.answerQuestion(token.getUserId(), itemId, type, answer);
         return Result.ok();
     }
 }
