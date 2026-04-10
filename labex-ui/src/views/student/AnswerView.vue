@@ -22,7 +22,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import api from '../../api/student'
 import { ElMessage } from 'element-plus'
@@ -35,14 +35,21 @@ const content = ref('')
 const lastSaveTime = ref('')
 let autoSaveTimer = null
 
-onMounted(async () => {
-  // Get item info from parent experiment - simplified
-  // Just set up the answer editor
-  try {
-    await api.saveAnswer(itemId, '')  // This won't work for loading existing
-  } catch {}
+const isCodeType = computed(() => {
+  return item.value?.experimentItemType === 2
+})
 
-  // Auto save every 10 minutes
+onMounted(async () => {
+  try {
+    const res = await api.getItem(itemId)
+    item.value = res.data.item
+    if (res.data.studentItem && res.data.studentItem.content) {
+      content.value = res.data.studentItem.content
+    }
+  } catch (e) {
+    ElMessage.error('加载题目失败')
+  }
+
   autoSaveTimer = setInterval(() => {
     if (content.value) {
       doSave()
