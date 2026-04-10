@@ -9,7 +9,8 @@
     </el-card>
     <el-card>
       <h3 style="margin-top: 0">我的答案</h3>
-      <el-input v-model="content" type="textarea" :rows="12" placeholder="请输入答案..." />
+      <RichTextEditor v-if="!isCodeType" v-model="content" :height="350" />
+      <CodeEditor v-else v-model="content" language="java" :height="350" />
       <div style="margin-top: 16px; display: flex; justify-content: space-between; align-items: center">
         <span style="color: #999; font-size: 12px">上次保存: {{ lastSaveTime || '未保存' }}</span>
         <div>
@@ -26,6 +27,8 @@ import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import api from '../../api/student'
 import { ElMessage } from 'element-plus'
+import RichTextEditor from '../../components/RichTextEditor.vue'
+import CodeEditor from '../../components/CodeEditor.vue'
 
 const route = useRoute()
 const router = useRouter()
