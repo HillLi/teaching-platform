@@ -51,4 +51,8 @@ export default {
 
   // Dashboard
   dashboardStats() { return request.get('/api/teacher/dashboard/stats') },
+
+  // Logs
+  listLogs(params) { return request.get('/api/teacher/logs', { params }) },
+  getStudentLogs(id) { return request.get(`/api/teacher/students/${id}/logs`) },
 }

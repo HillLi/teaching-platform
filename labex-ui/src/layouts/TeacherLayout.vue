@@ -32,6 +32,9 @@
         <el-menu-item index="/teacher/questions">
           <el-icon><Collection /></el-icon><span>题库管理</span>
         </el-menu-item>
+        <el-menu-item index="/teacher/logs">
+          <el-icon><Document /></el-icon><span>系统日志</span>
+        </el-menu-item>
       </el-menu>
     </el-aside>
     <el-container>
