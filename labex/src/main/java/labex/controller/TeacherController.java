@@ -7,6 +7,9 @@ import labex.dto.UserTokenVO;
 import labex.dto.SessionUtil;
 import labex.entity.*;
 import labex.service.TeacherService;
+import labex.service.LogService;
+import labex.entity.StudentLog;
+import labex.entity.SysLog;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
@@ -22,12 +25,14 @@ import java.util.Map;
 public class TeacherController {
 
     private final TeacherService teacherService;
+    private final LogService logService;
 
     @Value("${labex.upload.lecture-path}")
     private String lecturePath;
 
-    public TeacherController(TeacherService teacherService) {
+    public TeacherController(TeacherService teacherService, LogService logService) {
         this.teacherService = teacherService;
+        this.logService = logService;
     }
 
     private void verifyTeacher(HttpSession session) {
@@ -281,5 +286,24 @@ public class TeacherController {
     public Result<Map<String, Object>> dashboardStats(HttpSession session) {
         verifyTeacher(session);
         return Result.ok(teacherService.getDashboardStats());
+    }
+
+    // ===== Logs =====
+
+    @GetMapping("/logs")
+    public Result<Page<SysLog>> listLogs(
+            @RequestParam(required = false) String account,
+            @RequestParam(required = false) Integer type,
+            @RequestParam(defaultValue = "1") int pageNum,
+            @RequestParam(defaultValue = "20") int pageSize,
+            HttpSession session) {
+        verifyTeacher(session);
+        return Result.ok(logService.listSysLogs(account, type, pageNum, pageSize));
+    }
+
+    @GetMapping("/students/{id}/logs")
+    public Result<List<StudentLog>> getStudentLogs(@PathVariable Integer id, HttpSession session) {
+        verifyTeacher(session);
+        return Result.ok(logService.listStudentLogs(id));
     }
 }
