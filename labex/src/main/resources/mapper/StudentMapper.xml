@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="labex.mapper.StudentMapper">
+
+    <select id="selectClazzExperimentScore" resultType="java.util.Map">
+        CALL p_clazz_experiment_score(#{clazzNo}, #{expId})
+    </select>
+
+    <select id="selectStudentExperimentScore" resultType="java.util.Map">
+        CALL p_student_experiment_score(#{studentId})
+    </select>
+
+    <select id="selectStudentExperimentItemScore" resultType="java.util.Map">
+        CALL p_student_experiment_item_score(#{studentId}, #{expId})
+    </select>
+
+    <select id="selectClazzExperimentAnswers" resultType="java.util.Map">
+        CALL p_clazz_experiment_answers(#{expId}, #{clazzNo})
+    </select>
+
+</mapper>

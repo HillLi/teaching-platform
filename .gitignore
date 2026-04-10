@@ -1,0 +1,32 @@
+# Backend
+labex/target/
+labex/*.jar
+*.class
+
+# Frontend
+labex-ui/node_modules/
+labex-ui/dist/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Misc
+*.log
+*.png
+.playwright-mcp/
+cookies*.txt
+*_cookies.txt
+test_cookies.txt
+
+# Large files
+doc/labex.war
+doc/~$*.docx
+
+# Claude
+.claude/
