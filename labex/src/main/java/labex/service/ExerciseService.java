@@ -43,6 +43,13 @@ public class ExerciseService {
     }
 
     public void deleteExercise(Integer id) {
+        // Get item IDs first to delete student answers
+        List<Ex3Item> items = ex3ItemMapper.selectList(
+                new QueryWrapper<Ex3Item>().eq("excercise_id", id));
+        for (Ex3Item item : items) {
+            studentExerciseMapper.delete(
+                    new QueryWrapper<StudentExercise>().eq("item_id", item.getExcerciseItemId()));
+        }
         ex3ItemMapper.delete(new QueryWrapper<Ex3Item>().eq("excercise_id", id));
         ex3Mapper.deleteById(id);
     }
