@@ -6,7 +6,7 @@ import labex.dto.UserTokenVO;
 import labex.entity.Ex3;
 import labex.entity.Ex3Item;
 import labex.service.ExerciseService;
-import jakarta.servlet.http.HttpSession;
+import javax.servlet.http.HttpSession;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;

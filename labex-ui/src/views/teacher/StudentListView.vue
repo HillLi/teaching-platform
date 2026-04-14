@@ -3,12 +3,13 @@
     <div style="display: flex; justify-content: space-between; margin-bottom: 16px">
       <h2>学生管理</h2>
       <div>
-        <el-select v-model="clazzNo" placeholder="筛选班级" clearable @change="loadData" style="width: 150px; margin-right: 10px">
+        <el-select v-model="clazzNo" placeholder="筛选班级" clearable @change="() => loadData()" style="width: 150px; margin-right: 10px">
           <el-option v-for="c in classes" :key="c.no" :label="c.no" :value="c.no" />
         </el-select>
         <el-upload :show-file-list="false" accept=".csv" :before-upload="handleCsvImport" style="display: inline-block; margin-right: 10px">
           <el-button>导入CSV</el-button>
         </el-upload>
+        <el-button link type="info" @click="downloadCsvTemplate" style="margin-right: 10px">下载模板</el-button>
         <el-button type="primary" @click="showAddDialog">新增学生</el-button>
       </div>
     </div>
@@ -156,5 +157,23 @@ async function handleCsvImport(file) {
     ElMessage.error('导入失败')
   }
   return false
+}
+
+function downloadCsvTemplate() {
+  const BOM = '\uFEFF'
+  const header = '学号,姓名,班级'
+  const rows = [
+    '2024001,张三,202401',
+    '2024002,李四,202401',
+    '2024003,王五,182011'
+  ]
+  const csv = BOM + header + '\n' + rows.join('\n')
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = '学生导入模板.csv'
+  a.click()
+  URL.revokeObjectURL(url)
 }
 </script>

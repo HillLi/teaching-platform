@@ -8,7 +8,7 @@ import labex.dto.AnswerDTO;
 import labex.entity.*;
 import labex.service.StudentService;
 import labex.service.ExerciseService;
-import jakarta.servlet.http.HttpSession;
+import javax.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
@@ -20,6 +20,8 @@ import org.springframework.web.bind.annotation.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -70,10 +72,10 @@ public class StudentController {
         UserTokenVO token = verifyStudent(session);
         ExperimentItem item = studentService.getExperimentItemById(itemId);
         StudentItem si = studentService.getStudentItem(itemId, token.getUserId());
-        return Result.ok(Map.of(
-                "item", item,
-                "studentItem", si != null ? si : ""
-        ));
+        Map<String, Object> result = new HashMap<>();
+        result.put("item", item);
+        result.put("studentItem", si != null ? si : "");
+        return Result.ok(result);
     }
 
     @PostMapping("/items/{itemId}/answer")

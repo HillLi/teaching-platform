@@ -14,6 +14,7 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -140,8 +141,16 @@ public class TeacherService {
     }
 
     public int importStudentsFromCsv(MultipartFile file) throws Exception {
+        byte[] bytes = file.getBytes();
+        // Detect encoding: UTF-8 BOM -> UTF-8, otherwise check if valid UTF-8
+        String charset;
+        if (bytes.length >= 3 && (bytes[0] & 0xFF) == 0xEF && (bytes[1] & 0xFF) == 0xBB && (bytes[2] & 0xFF) == 0xBF) {
+            charset = "UTF-8";
+        } else {
+            charset = isValidUtf8(bytes) ? "UTF-8" : "GBK";
+        }
         BufferedReader reader = new BufferedReader(
-                new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8));
+                new InputStreamReader(file.getInputStream(), charset));
         String line = reader.readLine(); // Skip header
         int count = 0;
         while ((line = reader.readLine()) != null) {
@@ -290,11 +299,33 @@ public class TeacherService {
 
     public Map<String, Object> getDashboardStats() {
         Map<String, Object> stats = new java.util.HashMap<>();
-        try { stats.put("studentInfo", jdbcTemplate.queryForMap("SELECT * FROM v_student_info")); } catch (Exception e) { stats.put("studentInfo", Map.of()); }
-        try { stats.put("clazzInfo", jdbcTemplate.queryForMap("SELECT * FROM v_clazz_info")); } catch (Exception e) { stats.put("clazzInfo", Map.of()); }
-        try { stats.put("answerDataInfo", jdbcTemplate.queryForMap("SELECT * FROM v_student_answer_data_info")); } catch (Exception e) { stats.put("answerDataInfo", Map.of()); }
-        try { stats.put("answerLogInfo", jdbcTemplate.queryForMap("SELECT * FROM v_student_answer_log_info")); } catch (Exception e) { stats.put("answerLogInfo", Map.of()); }
-        try { stats.put("sysLogInfo", jdbcTemplate.queryForMap("SELECT * FROM v_sys_log_info")); } catch (Exception e) { stats.put("sysLogInfo", Map.of()); }
+        try { stats.put("studentInfo", jdbcTemplate.queryForMap("SELECT * FROM v_student_info")); } catch (Exception e) { stats.put("studentInfo", Collections.emptyMap()); }
+        try { stats.put("clazzInfo", jdbcTemplate.queryForMap("SELECT * FROM v_clazz_info")); } catch (Exception e) { stats.put("clazzInfo", Collections.emptyMap()); }
+        try { stats.put("answerDataInfo", jdbcTemplate.queryForMap("SELECT * FROM v_student_answer_data_info")); } catch (Exception e) { stats.put("answerDataInfo", Collections.emptyMap()); }
+        try { stats.put("answerLogInfo", jdbcTemplate.queryForMap("SELECT * FROM v_student_answer_log_info")); } catch (Exception e) { stats.put("answerLogInfo", Collections.emptyMap()); }
+        try { stats.put("sysLogInfo", jdbcTemplate.queryForMap("SELECT * FROM v_sys_log_info")); } catch (Exception e) { stats.put("sysLogInfo", Collections.emptyMap()); }
         return stats;
+    }
+
+    private boolean isValidUtf8(byte[] bytes) {
+        int i = 0;
+        while (i < bytes.length) {
+            int b = bytes[i] & 0xFF;
+            if (b < 0x80) {
+                i++;
+            } else if ((b & 0xE0) == 0xC0) {
+                if (i + 1 >= bytes.length || (bytes[i + 1] & 0xC0) != 0x80) return false;
+                i += 2;
+            } else if ((b & 0xF0) == 0xE0) {
+                if (i + 2 >= bytes.length || (bytes[i + 1] & 0xC0) != 0x80 || (bytes[i + 2] & 0xC0) != 0x80) return false;
+                i += 3;
+            } else if ((b & 0xF8) == 0xF0) {
+                if (i + 3 >= bytes.length || (bytes[i + 1] & 0xC0) != 0x80 || (bytes[i + 2] & 0xC0) != 0x80 || (bytes[i + 3] & 0xC0) != 0x80) return false;
+                i += 4;
+            } else {
+                return false;
+            }
+        }
+        return true;
     }
 }

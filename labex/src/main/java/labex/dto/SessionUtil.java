@@ -1,6 +1,6 @@
 package labex.dto;
 
-import jakarta.servlet.http.HttpSession;
+import javax.servlet.http.HttpSession;
 
 public class SessionUtil {
     public static final String USER_TOKEN_KEY = "userToken";

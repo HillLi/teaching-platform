@@ -1,9 +1,9 @@
 package labex.interceptor;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import labex.common.Result;
 import labex.dto.SessionUtil;
 import labex.dto.UserTokenVO;

@@ -28,7 +28,7 @@ CREATE TABLE `t_assistant` (
   `assistant_student_no` varchar(8) DEFAULT NULL,
   `assistant_student_name` varchar(255) DEFAULT NULL,
   `assistant_student_clazz` varchar(6) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -52,7 +52,7 @@ CREATE TABLE `t_clazz` (
   `memo` text,
   `state` int DEFAULT '0',
   PRIMARY KEY (`no`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -82,7 +82,7 @@ CREATE TABLE `t_ex3` (
   `begin_time` datetime DEFAULT NULL,
   `end_time` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -111,7 +111,7 @@ CREATE TABLE `t_ex3_item` (
   `type` int DEFAULT NULL,
   PRIMARY KEY (`excercise_item_id`),
   KEY `fk_excercise_id` (`excercise_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -138,7 +138,7 @@ CREATE TABLE `t_exam` (
   `time` datetime DEFAULT NULL,
   `flag` bit(1) DEFAULT NULL COMMENT '考试开放标记',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -168,7 +168,7 @@ CREATE TABLE `t_experiment` (
   `state` int DEFAULT NULL,
   PRIMARY KEY (`experiment_id`),
   KEY `idx_experiment_no` (`experiment_no`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=37 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=37 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -192,7 +192,7 @@ CREATE TABLE `t_experiment_item` (
   KEY `fk_experiment_id` (`experiment_id`),
   KEY `idx_experiment_item_no` (`experiment_item_no`) USING BTREE,
   CONSTRAINT `fk_experiment_id` FOREIGN KEY (`experiment_id`) REFERENCES `t_experiment` (`experiment_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=143 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=143 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -208,7 +208,7 @@ CREATE TABLE `t_lecture` (
   `lecture_type` int DEFAULT NULL,
   `lecture_filetype` varchar(10) DEFAULT NULL,
   PRIMARY KEY (`lecture_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -234,7 +234,7 @@ CREATE TABLE `t_paper` (
   `description` varchar(255) DEFAULT NULL,
   `time` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -259,7 +259,7 @@ CREATE TABLE `t_paper_question` (
   `question_id` int DEFAULT NULL,
   `score` int DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -284,7 +284,7 @@ CREATE TABLE `t_question` (
   `answer` varchar(255) DEFAULT NULL,
   `type` int DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -307,7 +307,7 @@ CREATE TABLE `t_question_type` (
   `type_id` int NOT NULL,
   `type_name` varchar(10) DEFAULT NULL,
   PRIMARY KEY (`type_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -337,7 +337,7 @@ CREATE TABLE `t_score` (
   KEY `fk_score_experiment` (`experiment_id`),
   CONSTRAINT `fk_score_experiment` FOREIGN KEY (`experiment_id`) REFERENCES `t_experiment` (`experiment_id`),
   CONSTRAINT `fk_score_student` FOREIGN KEY (`student_id`) REFERENCES `t_student` (`student_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -370,7 +370,7 @@ CREATE TABLE `t_student` (
   UNIQUE KEY `idx_student_no` (`student_no`) USING BTREE,
   KEY `fk_clazz_no` (`clazz_no`),
   CONSTRAINT `fk_clazz_no` FOREIGN KEY (`clazz_no`) REFERENCES `t_clazz` (`no`)
-) ENGINE=InnoDB AUTO_INCREMENT=2226 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=2226 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -391,7 +391,7 @@ CREATE TABLE `t_student_answer` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `idx_answer_pk` (`item_id`,`fill_no`,`content_hash`) USING BTREE,
   CONSTRAINT `fk_answer_item_id` FOREIGN KEY (`item_id`) REFERENCES `t_experiment_item` (`experiment_item_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=11811 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=11811 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -414,7 +414,7 @@ CREATE TABLE `t_student_excercise` (
   KEY `fk_student_excercise_id` (`student_id`),
   CONSTRAINT `fk_excercise_item_id` FOREIGN KEY (`item_id`) REFERENCES `t_ex3_item` (`excercise_item_id`),
   CONSTRAINT `fk_student_excercise_id` FOREIGN KEY (`student_id`) REFERENCES `t_student` (`student_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -446,7 +446,7 @@ CREATE TABLE `t_student_item` (
   KEY `fk_item_id` (`item_id`),
   CONSTRAINT `fk_item_id` FOREIGN KEY (`item_id`) REFERENCES `t_experiment_item` (`experiment_item_id`),
   CONSTRAINT `fk_student_id` FOREIGN KEY (`student_id`) REFERENCES `t_student` (`student_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=25112 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=25112 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -473,7 +473,7 @@ CREATE TABLE `t_student_item_log` (
   PRIMARY KEY (`log_id`),
   KEY `fk_student_item` (`student_item`,`fill_time`) USING BTREE,
   CONSTRAINT `fk_student_item` FOREIGN KEY (`student_item`) REFERENCES `t_student_item` (`student_item_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=136670 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=136670 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -501,7 +501,7 @@ CREATE TABLE `t_student_log` (
   `ip` varchar(20) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `idx_time` (`time`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=352452 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=352452 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 
@@ -522,7 +522,7 @@ CREATE TABLE `t_student_question` (
   KEY `fk_question` (`question_id`),
   CONSTRAINT `fk_question` FOREIGN KEY (`question_id`) REFERENCES `t_question` (`id`),
   CONSTRAINT `fk_student` FOREIGN KEY (`student_id`) REFERENCES `t_student` (`student_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -545,7 +545,7 @@ CREATE TABLE `t_sys_config` (
   `param` varchar(20) NOT NULL,
   `value` varchar(100) DEFAULT NULL,
   PRIMARY KEY (`param`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -573,7 +573,7 @@ CREATE TABLE `t_sys_log` (
   `ip` varchar(100) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `idx_time` (`time`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=231223 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=231223 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -599,7 +599,7 @@ CREATE TABLE `t_teacher` (
   `teacher_password` char(32) NOT NULL,
   `teacher_name` varchar(20) NOT NULL,
   PRIMARY KEY (`teacher_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --

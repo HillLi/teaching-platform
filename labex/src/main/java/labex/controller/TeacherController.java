@@ -13,13 +13,14 @@ import labex.entity.StudentLog;
 import labex.entity.SysLog;
 import labex.entity.SysConfig;
 import labex.mapper.SysConfigMapper;
-import jakarta.servlet.http.HttpSession;
+import javax.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -141,7 +142,7 @@ public class TeacherController {
     public Result<Map<String, Object>> importStudentsCsv(@RequestParam("file") MultipartFile file, HttpSession session) throws Exception {
         verifyTeacher(session);
         int count = teacherService.importStudentsFromCsv(file);
-        return Result.ok(Map.of("count", count));
+        return Result.ok(Collections.singletonMap("count", count));
     }
 
     // ===== Experiment Management =====

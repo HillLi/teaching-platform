@@ -1,8 +1,8 @@
 package labex.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 import labex.common.BusinessException;
 import labex.dto.LoginRequest;
 import labex.dto.SessionUtil;
