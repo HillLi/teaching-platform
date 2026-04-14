@@ -24,7 +24,9 @@
         <el-table :data="experiments" border stripe>
           <el-table-column prop="experimentNo" label="编号" width="80" />
           <el-table-column prop="experimentName" label="实验名称" />
-          <el-table-column prop="experimentType" label="类型" width="100" />
+          <el-table-column label="类型" width="100">
+            <template #default="{ row }">{{ experimentTypes[row.experimentType] || row.experimentType }}</template>
+          </el-table-column>
           <el-table-column label="操作" width="150">
             <template #default="{ row }">
               <el-button size="small" type="primary" @click="goToExperiment(row.experimentId)">进入实验</el-button>
@@ -52,6 +54,7 @@ import api from '../../api/student'
 
 const router = useRouter()
 const experiments = ref([])
+const experimentTypes = { 1: '讲义', 2: '代码', 3: '软件', 4: '参考资料', 5: '验证型', 6: '设计型', 7: '综合型' }
 const scores = ref([])
 const stats = ref({})
 

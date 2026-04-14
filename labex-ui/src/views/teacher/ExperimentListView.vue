@@ -7,7 +7,9 @@
     <el-table :data="experiments" border stripe>
       <el-table-column prop="experimentNo" label="编号" width="80" />
       <el-table-column prop="experimentName" label="实验名称" />
-      <el-table-column prop="experimentType" label="类型" width="100" />
+      <el-table-column label="类型" width="100">
+        <template #default="{ row }">{{ experimentTypes[row.experimentType] || row.experimentType }}</template>
+      </el-table-column>
       <el-table-column prop="instructionType" label="指导书类型" width="120" />
       <el-table-column prop="state" label="状态" width="100">
         <template #default="{ row }">
@@ -32,7 +34,9 @@
           <el-input v-model="form.experimentName" />
         </el-form-item>
         <el-form-item label="实验类型">
-          <el-input-number v-model="form.experimentType" :min="1" />
+          <el-select v-model="form.experimentType" style="width: 100%">
+            <el-option v-for="(name, val) in experimentTypes" :key="val" :label="name" :value="Number(val)" />
+          </el-select>
         </el-form-item>
         <el-form-item label="指导书类型">
           <el-input v-model="form.instructionType" />
@@ -57,6 +61,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 
 const router = useRouter()
 const experiments = ref([])
+const experimentTypes = { 1: '讲义', 2: '代码', 3: '软件', 4: '参考资料', 5: '验证型', 6: '设计型', 7: '综合型' }
 const dialogVisible = ref(false)
 const isEdit = ref(false)
 const form = ref({ experimentNo: 1, experimentName: '', experimentType: 1, instructionType: 'html', experimentRequirement: '' })

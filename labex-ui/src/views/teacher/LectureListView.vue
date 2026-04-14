@@ -12,7 +12,9 @@
           <el-input v-model="uploadForm.name" />
         </el-form-item>
         <el-form-item label="讲义类型">
-          <el-input-number v-model="uploadForm.type" :min="1" />
+          <el-select v-model="uploadForm.type" style="width: 100%">
+            <el-option v-for="(name, val) in lectureTypes" :key="val" :label="name" :value="Number(val)" />
+          </el-select>
         </el-form-item>
       </el-form>
       <template #footer>
@@ -23,7 +25,9 @@
     <el-table :data="lectures" border stripe>
       <el-table-column prop="lectureId" label="ID" width="80" />
       <el-table-column prop="lectureName" label="讲义名称" />
-      <el-table-column prop="lectureType" label="类型" width="100" />
+      <el-table-column label="类型" width="100">
+        <template #default="{ row }">{{ lectureTypes[row.lectureType] || row.lectureType }}</template>
+      </el-table-column>
       <el-table-column prop="lectureFiletype" label="文件类型" width="100" />
       <el-table-column label="操作" width="120">
         <template #default="{ row }">
@@ -40,6 +44,7 @@ import api from '../../api/teacher'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 const lectures = ref([])
+const lectureTypes = { 1: '课堂练习', 2: '课后作业', 3: '课堂测验', 4: '上机测试' }
 const uploadDialogVisible = ref(false)
 const uploadForm = ref({ name: '', type: 1 })
 let pendingFile = null
