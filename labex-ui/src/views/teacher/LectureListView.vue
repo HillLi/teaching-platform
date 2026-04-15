@@ -1,30 +1,40 @@
 <template>
   <div>
     <div style="display: flex; justify-content: space-between; margin-bottom: 16px">
-      <h2>讲义管理</h2>
-      <el-upload :show-file-list="false" :before-upload="handleUpload" accept=".pdf,.doc,.docx,.ppt,.pptx,.zip">
-        <el-button type="primary">上传讲义</el-button>
-      </el-upload>
+      <h2>课程资料</h2>
+      <el-button type="primary" @click="openUploadDialog">上传资料</el-button>
     </div>
-    <el-dialog v-model="uploadDialogVisible" title="上传讲义" width="400">
+    <el-dialog v-model="uploadDialogVisible" title="上传资料" width="400">
       <el-form :model="uploadForm" label-width="80px">
-        <el-form-item label="讲义名称">
-          <el-input v-model="uploadForm.name" />
+        <el-form-item label="资料名称">
+          <el-input v-model="uploadForm.name" placeholder="请输入资料名称" />
         </el-form-item>
-        <el-form-item label="讲义类型">
+        <el-form-item label="资料类型">
           <el-select v-model="uploadForm.type" style="width: 100%">
             <el-option v-for="(name, val) in lectureTypes" :key="val" :label="name" :value="Number(val)" />
           </el-select>
         </el-form-item>
+        <el-form-item label="上传文件">
+          <el-upload
+            ref="uploadRef"
+            :auto-upload="false"
+            :limit="1"
+            :on-change="handleFileChange"
+            :on-remove="handleFileRemove"
+            accept=".pdf,.doc,.docx,.ppt,.pptx,.zip"
+          >
+            <el-button size="small" type="primary">选择文件</el-button>
+          </el-upload>
+        </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="uploadDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="doUpload">确认上传</el-button>
+        <el-button type="primary" @click="doUpload" :disabled="!pendingFile">保存</el-button>
       </template>
     </el-dialog>
     <el-table :data="lectures" border stripe>
       <el-table-column prop="lectureId" label="ID" width="80" />
-      <el-table-column prop="lectureName" label="讲义名称" />
+      <el-table-column prop="lectureName" label="资料名称" />
       <el-table-column label="类型" width="100">
         <template #default="{ row }">{{ lectureTypes[row.lectureType] || row.lectureType }}</template>
       </el-table-column>
@@ -44,10 +54,11 @@ import api from '../../api/teacher'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 const lectures = ref([])
-const lectureTypes = { 1: '课堂练习', 2: '课后作业', 3: '课堂测验', 4: '上机测试' }
+const lectureTypes = { 1: '讲义', 2: '代码', 3: '软件', 4: '参考资料' }
 const uploadDialogVisible = ref(false)
 const uploadForm = ref({ name: '', type: 1 })
-let pendingFile = null
+const uploadRef = ref(null)
+const pendingFile = ref(null)
 
 onMounted(loadData)
 
@@ -56,16 +67,31 @@ async function loadData() {
   lectures.value = res.data
 }
 
-function handleUpload(file) {
-  pendingFile = file
-  uploadForm.value.name = file.name.replace(/\.[^.]+$/, '')
+function openUploadDialog() {
+  uploadForm.value = { name: '', type: 1 }
+  pendingFile.value = null
+  uploadRef.value?.clearFiles()
   uploadDialogVisible.value = true
-  return false
+}
+
+function handleFileChange(file) {
+  pendingFile.value = file.raw
+  if (!uploadForm.value.name) {
+    uploadForm.value.name = file.name.replace(/\.[^.]+$/, '')
+  }
+}
+
+function handleFileRemove() {
+  pendingFile.value = null
 }
 
 async function doUpload() {
+  if (!pendingFile.value) {
+    ElMessage.warning('请选择文件')
+    return
+  }
   const formData = new FormData()
-  formData.append('file', pendingFile)
+  formData.append('file', pendingFile.value)
   formData.append('name', uploadForm.value.name)
   formData.append('type', uploadForm.value.type)
   await api.uploadLecture(formData)

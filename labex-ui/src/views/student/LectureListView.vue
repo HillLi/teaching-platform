@@ -1,9 +1,9 @@
 <template>
   <div>
-    <h2>讲义下载</h2>
+    <h2>课程资料</h2>
     <el-table :data="lectures" border stripe style="margin-top: 16px">
       <el-table-column prop="lectureId" label="ID" width="80" />
-      <el-table-column prop="lectureName" label="讲义名称" />
+      <el-table-column prop="lectureName" label="资料名称" />
       <el-table-column prop="lectureFiletype" label="文件类型" width="100" />
       <el-table-column label="操作" width="120">
         <template #default="{ row }">

@@ -9,10 +9,10 @@
           <el-icon><HomeFilled /></el-icon><span>我的实验</span>
         </el-menu-item>
         <el-menu-item index="/student/exercises">
-          <el-icon><Notebook /></el-icon><span>练习中心</span>
+          <el-icon><Notebook /></el-icon><span>题库练习</span>
         </el-menu-item>
         <el-menu-item index="/student/lectures">
-          <el-icon><FolderOpened /></el-icon><span>讲义下载</span>
+          <el-icon><FolderOpened /></el-icon><span>课程资料</span>
         </el-menu-item>
         <el-menu-item index="/student/password">
           <el-icon><Lock /></el-icon><span>修改密码</span>

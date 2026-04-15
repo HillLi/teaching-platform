@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h2>练习中心</h2>
+    <h2>题库练习</h2>
     <el-table :data="exercises" border stripe style="margin-top: 16px">
       <el-table-column prop="name" label="练习名称" />
       <el-table-column prop="description" label="描述" />

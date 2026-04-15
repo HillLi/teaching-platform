@@ -100,7 +100,6 @@ import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { Delete } from '@element-plus/icons-vue'
 import api from '../../api/teacher'
-import questionApi from '../../api/question'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 const route = useRoute()
@@ -112,7 +111,7 @@ const form = ref({})
 const questionTypes = ref([])
 
 onMounted(async () => {
-  const res = await questionApi.listTypes()
+  const res = await api.listQuestionTypes()
   questionTypes.value = res.data
   loadData()
 })

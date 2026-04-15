@@ -1,8 +1,8 @@
 <template>
   <div>
     <div style="display: flex; justify-content: space-between; margin-bottom: 16px">
-      <h2>练习答题</h2>
-      <el-button @click="$router.back()">返回练习列表</el-button>
+      <h2>答题</h2>
+      <el-button @click="$router.back()">返回题库</el-button>
     </div>
     <el-card v-for="(item, idx) in items" :key="item.excerciseItemId" style="margin-bottom: 16px">
       <h3 style="margin-top: 0">第 {{ idx + 1 }} 题</h3>

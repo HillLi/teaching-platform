@@ -20,7 +20,7 @@
       </el-col>
       <el-col :span="6">
         <el-card shadow="hover">
-          <el-statistic title="讲义数" :value="quickStats.lectures" />
+          <el-statistic title="资料数" :value="quickStats.lectures" />
         </el-card>
       </el-col>
     </el-row>

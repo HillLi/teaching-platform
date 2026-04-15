@@ -106,7 +106,7 @@ public class StudentController {
         Lecture lecture = lectures.stream()
                 .filter(l -> l.getLectureId().equals(id))
                 .findFirst()
-                .orElseThrow(() -> new BusinessException("讲义不存在"));
+                .orElseThrow(() -> new BusinessException("资料不存在"));
 
         File file = new File(lecturePath, lecture.getLectureId() + "." + lecture.getLectureFiletype());
         if (!file.exists()) {

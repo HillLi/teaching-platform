@@ -5,6 +5,8 @@ import labex.dto.SessionUtil;
 import labex.dto.UserTokenVO;
 import labex.entity.Ex3;
 import labex.entity.Ex3Item;
+import labex.entity.QuestionType;
+import labex.mapper.QuestionTypeMapper;
 import labex.service.ExerciseService;
 import javax.servlet.http.HttpSession;
 import org.springframework.web.bind.annotation.*;
@@ -17,9 +19,16 @@ import java.util.Map;
 public class ExerciseController {
 
     private final ExerciseService exerciseService;
+    private final QuestionTypeMapper questionTypeMapper;
 
-    public ExerciseController(ExerciseService exerciseService) {
+    public ExerciseController(ExerciseService exerciseService, QuestionTypeMapper questionTypeMapper) {
         this.exerciseService = exerciseService;
+        this.questionTypeMapper = questionTypeMapper;
+    }
+
+    @GetMapping("/types")
+    public Result<List<QuestionType>> listTypes() {
+        return Result.ok(questionTypeMapper.selectList(null));
     }
 
     @GetMapping

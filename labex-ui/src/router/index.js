@@ -22,7 +22,6 @@ const routes = [
       { path: 'class-report', name: 'ClassReport', component: () => import('../views/teacher/ClassReportView.vue') },
       { path: 'lectures', name: 'LectureList', component: () => import('../views/teacher/LectureListView.vue') },
       { path: 'exercises', name: 'ExerciseList', component: () => import('../views/teacher/ExerciseListView.vue') },
-      { path: 'questions', name: 'QuestionManage', component: () => import('../views/teacher/QuestionManageView.vue') },
       { path: 'logs', name: 'SysLogs', component: () => import('../views/teacher/SysLogView.vue') },
     ]
   },

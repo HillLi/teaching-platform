@@ -1,7 +1,7 @@
 <template>
   <div>
     <div style="display: flex; justify-content: space-between; margin-bottom: 16px">
-      <h2>练习管理</h2>
+      <h2>题库管理</h2>
       <el-button type="primary" @click="showAddDialog">新增练习</el-button>
     </div>
     <el-table :data="exercises" border stripe>
@@ -35,6 +35,7 @@
     <el-dialog v-model="itemDialogVisible" title="练习题目" width="600">
       <el-button size="small" type="primary" @click="addItemDialog = true" style="margin-bottom: 10px">新增题目</el-button>
       <el-table :data="items" border>
+        <el-table-column type="index" label="序号" width="70" />
         <el-table-column prop="question" label="题目" />
         <el-table-column prop="options" label="选项" />
         <el-table-column prop="answer" label="答案" width="100" />
@@ -110,7 +111,6 @@
 import { ref, onMounted } from 'vue'
 import { Delete } from '@element-plus/icons-vue'
 import api from '../../api/teacher'
-import questionApi from '../../api/question'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 const exercises = ref([])
@@ -128,7 +128,7 @@ const itemForm = ref({ question: '', optionList: ['', ''], answer: '', multiAnsw
 onMounted(async () => {
   const res = await api.listExercises()
   exercises.value = res.data
-  const tRes = await questionApi.listTypes()
+  const tRes = await api.listQuestionTypes()
   questionTypes.value = tRes.data
 })
 
