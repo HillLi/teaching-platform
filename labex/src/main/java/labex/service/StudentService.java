@@ -12,9 +12,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class StudentService {
@@ -62,6 +61,32 @@ public class StudentService {
                         .orderByAsc("experiment_item_no"));
     }
 
+    public List<Map<String, Object>> getExperimentItemsWithAnswer(Integer experimentId, Integer studentId) {
+        List<ExperimentItem> items = getExperimentItems(experimentId);
+        List<Integer> itemIds = items.stream().map(ExperimentItem::getExperimentItemId).collect(Collectors.toList());
+        Set<Integer> answeredIds;
+        if (!itemIds.isEmpty()) {
+            List<StudentItem> studentItems = studentItemMapper.selectList(
+                    new QueryWrapper<StudentItem>()
+                            .eq("student_id", studentId)
+                            .in("item_id", itemIds));
+            answeredIds = studentItems.stream().map(StudentItem::getItemId).collect(Collectors.toSet());
+        } else {
+            answeredIds = Collections.emptySet();
+        }
+        return items.stream().map(item -> {
+            Map<String, Object> m = new HashMap<>();
+            m.put("experimentItemId", item.getExperimentItemId());
+            m.put("experimentItemNo", item.getExperimentItemNo());
+            m.put("experimentItemName", item.getExperimentItemName());
+            m.put("experimentItemType", item.getExperimentItemType());
+            m.put("experimentItemScore", item.getExperimentItemScore());
+            m.put("experimentId", item.getExperimentId());
+            m.put("answered", answeredIds.contains(item.getExperimentItemId()));
+            return m;
+        }).collect(Collectors.toList());
+    }
+
     public ExperimentItem getExperimentItemById(Integer itemId) {
         ExperimentItem item = experimentItemMapper.selectById(itemId);
         if (item == null) throw new BusinessException("题目不存在");
@@ -80,6 +105,10 @@ public class StudentService {
                 new QueryWrapper<StudentItem>()
                         .eq("item_id", itemId)
                         .eq("student_id", studentId));
+
+        if (existing != null && existing.getScoreFlag() != null && existing.getScoreFlag() == 1) {
+            throw new BusinessException("该题目已批改，无法修改");
+        }
 
         LocalDateTime now = LocalDateTime.now();
 

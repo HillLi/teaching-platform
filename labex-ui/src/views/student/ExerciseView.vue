@@ -5,7 +5,12 @@
       <el-button @click="$router.back()">返回题库</el-button>
     </div>
     <el-card v-for="(item, idx) in items" :key="item.excerciseItemId" style="margin-bottom: 16px">
-      <h3 style="margin-top: 0">第 {{ idx + 1 }} 题</h3>
+      <h3 style="margin-top: 0">
+        第 {{ idx + 1 }} 题
+        <el-tag size="small" style="margin-left: 8px">{{ typeMap[item.type] || '未知' }}</el-tag>
+        <el-tag v-if="answeredMap[item.excerciseItemId]" type="success" size="small" style="margin-left: 8px">已答</el-tag>
+        <el-tag v-else type="info" size="small" style="margin-left: 8px">未答</el-tag>
+      </h3>
       <div v-html="item.question"></div>
       <!-- 单选 type=2 -->
       <div v-if="item.type === 2 && item.options" style="margin-top: 8px">
@@ -32,13 +37,29 @@
           <el-radio value="F">错误</el-radio>
         </el-radio-group>
       </div>
-      <!-- 填空/简答/编程/综合 -->
+      <!-- 编程 type=6 -->
+      <div v-else-if="item.type === 6" style="margin-top: 8px">
+        <CodeEditor v-model="answers[item.excerciseItemId]" language="java" :height="250" />
+      </div>
+      <!-- 简答 type=5 / 综合 type=7 -->
+      <div v-else-if="item.type === 5 || item.type === 7" style="margin-top: 8px">
+        <RichTextEditor v-model="answers[item.excerciseItemId]" :height="250" />
+      </div>
+      <!-- 填空 type=1 / 其他 -->
       <div v-else style="margin-top: 8px">
         <el-input v-model="answers[item.excerciseItemId]" type="textarea" :rows="3" placeholder="请输入答案..." />
       </div>
       <div style="margin-top: 8px">
         <el-button type="primary" size="small" @click="submitAnswer(item)">提交答案</el-button>
+        <el-button v-if="answeredMap[item.excerciseItemId]" type="success" size="small" @click="toggleAnswer(item.excerciseItemId)">
+          {{ showAnswerMap[item.excerciseItemId] ? '隐藏答案' : '查看答案' }}
+        </el-button>
       </div>
+      <el-alert v-if="showAnswerMap[item.excerciseItemId]" type="success" :closable="false" style="margin-top: 8px">
+        <template #title>
+          <span>正确答案：{{ formatCorrectAnswer(item) }}</span>
+        </template>
+      </el-alert>
     </el-card>
     <el-empty v-if="items.length === 0" description="暂无题目" />
   </div>
@@ -49,25 +70,44 @@ import { ref, reactive, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import api from '../../api/student'
 import { ElMessage } from 'element-plus'
+import CodeEditor from '../../components/CodeEditor.vue'
+import RichTextEditor from '../../components/RichTextEditor.vue'
 
 const route = useRoute()
 const exerciseId = route.params.id
 const items = ref([])
 const answers = reactive({})
 const multiAnswers = reactive({})
+const answeredMap = reactive({})
+const showAnswerMap = reactive({})
+const typeMap = { 1: '填空', 2: '单选', 3: '多选', 4: '判断', 5: '简答', 6: '编程', 7: '综合' }
 
 function parseOptions(options) {
   if (!options) return []
   return options.includes('||') ? options.split('||') : options.split(',')
 }
 
+function toggleAnswer(id) {
+  showAnswerMap[id] = !showAnswerMap[id]
+}
+
+function formatCorrectAnswer(item) {
+  const ans = item.answer
+  if (!ans) return '暂无'
+  if (item.type === 4) return ans === 'T' ? '正确' : '错误'
+  return ans
+}
+
 onMounted(async () => {
   const res = await api.getExerciseItems(exerciseId)
   items.value = res.data
-  // 初始化多选答案数组
   items.value.forEach(item => {
+    const sa = item.studentAnswer
+    answeredMap[item.excerciseItemId] = item.answered || false
     if (item.type === 3) {
-      multiAnswers[item.excerciseItemId] = []
+      multiAnswers[item.excerciseItemId] = sa ? sa.split('') : []
+    } else if (sa) {
+      answers[item.excerciseItemId] = sa
     }
   })
 })
@@ -88,6 +128,7 @@ async function submitAnswer(item) {
     type: item.type,
     answer: answer
   })
+  answeredMap[item.excerciseItemId] = true
   ElMessage.success('答案已提交')
 }
 </script>

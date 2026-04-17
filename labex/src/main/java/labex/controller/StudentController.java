@@ -61,10 +61,9 @@ public class StudentController {
     }
 
     @GetMapping("/experiments/{id}/items")
-    public Result<List<ExperimentItem>> getExperimentItems(@PathVariable Integer id, HttpSession session) {
+    public Result<List<Map<String, Object>>> getExperimentItems(@PathVariable Integer id, HttpSession session) {
         UserTokenVO token = verifyStudent(session);
-        List<ExperimentItem> items = studentService.getExperimentItems(id);
-        return Result.ok(items);
+        return Result.ok(studentService.getExperimentItemsWithAnswer(id, token.getUserId()));
     }
 
     @GetMapping("/items/{itemId}")
@@ -140,9 +139,9 @@ public class StudentController {
     }
 
     @GetMapping("/exercises/{id}/items")
-    public Result<List<Ex3Item>> getExerciseItems(@PathVariable Integer id, HttpSession session) {
-        verifyStudent(session);
-        return Result.ok(exerciseService.getExerciseItems(id));
+    public Result<List<Map<String, Object>>> getExerciseItems(@PathVariable Integer id, HttpSession session) {
+        UserTokenVO token = verifyStudent(session);
+        return Result.ok(exerciseService.getExerciseItemsWithAnswer(id, token.getUserId()));
     }
 
     @PostMapping("/exercises/answer")

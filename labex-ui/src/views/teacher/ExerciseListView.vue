@@ -32,14 +32,32 @@
       </template>
     </el-dialog>
 
-    <el-dialog v-model="itemDialogVisible" title="练习题目" width="600">
+    <el-dialog v-model="itemDialogVisible" title="练习题目" width="700">
       <el-button size="small" type="primary" @click="addItemDialog = true" style="margin-bottom: 10px">新增题目</el-button>
       <el-table :data="items" border>
-        <el-table-column type="index" label="序号" width="70" />
-        <el-table-column prop="question" label="题目" />
-        <el-table-column prop="options" label="选项" />
-        <el-table-column prop="answer" label="答案" width="100" />
-        <el-table-column label="类型" width="80">
+        <el-table-column type="index" label="序号" width="60" />
+        <el-table-column label="题目" min-width="120">
+          <template #default="{ row }">
+            {{ truncate(row.question) }}
+            <el-button v-if="isLong(row.question)" type="primary" link size="small" @click="showDetail('题目', row.question)">详情</el-button>
+          </template>
+        </el-table-column>
+        <el-table-column label="选项" width="120">
+          <template #default="{ row }">
+            <template v-if="row.options">
+              {{ truncate(row.options) }}
+              <el-button v-if="isLong(row.options)" type="primary" link size="small" @click="showDetail('选项', row.options)">详情</el-button>
+            </template>
+            <span v-else>-</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="答案" width="120">
+          <template #default="{ row }">
+            {{ truncate(row.answer) }}
+            <el-button v-if="isLong(row.answer)" type="primary" link size="small" @click="showDetail('答案', row.answer)">详情</el-button>
+          </template>
+        </el-table-column>
+        <el-table-column label="类型" width="70">
           <template #default="{ row }">{{ getTypeName(row.type) }}</template>
         </el-table-column>
       </el-table>
@@ -104,6 +122,13 @@
         <el-button type="primary" @click="saveItem">保存</el-button>
       </template>
     </el-dialog>
+
+    <el-dialog v-model="detailVisible" :title="detailTitle" width="600">
+      <div style="max-height: 400px; overflow-y: auto; white-space: pre-wrap; word-break: break-all">{{ detailContent }}</div>
+      <template #footer>
+        <el-button @click="detailVisible = false">关闭</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -124,6 +149,22 @@ const editingItem = ref(null)
 const items = ref([])
 const currentExId = ref(null)
 const itemForm = ref({ question: '', optionList: ['', ''], answer: '', multiAnswer: [], type: 2 })
+const detailVisible = ref(false)
+const detailTitle = ref('')
+const detailContent = ref('')
+
+function isLong(text) {
+  return text && text.length > 30
+}
+function truncate(text) {
+  if (!text) return '-'
+  return text.length > 30 ? text.substring(0, 30) + '...' : text
+}
+function showDetail(title, content) {
+  detailTitle.value = title
+  detailContent.value = content
+  detailVisible.value = true
+}
 
 onMounted(async () => {
   const res = await api.listExercises()

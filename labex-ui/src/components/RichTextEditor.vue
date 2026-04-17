@@ -21,7 +21,9 @@ const emit = defineEmits(['update:modelValue'])
 
 const editorRef = shallowRef(null)
 
-const toolbarConfig = {}
+const toolbarConfig = {
+  excludeKeys: ['group-image', 'group-video']
+}
 const editorConfig = {
   placeholder: props.placeholder,
   MENU_CONF: {}

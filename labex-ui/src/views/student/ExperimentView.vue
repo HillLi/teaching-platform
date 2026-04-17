@@ -11,7 +11,11 @@
     <el-table :data="items" border stripe>
       <el-table-column prop="experimentItemNo" label="题号" width="80" />
       <el-table-column prop="experimentItemName" label="题目名" width="200" />
-      <el-table-column prop="experimentItemType" label="类型" width="80" />
+      <el-table-column label="类型" width="80">
+        <template #default="{ row }">
+          {{ typeName(row.experimentItemType) }}
+        </template>
+      </el-table-column>
       <el-table-column prop="experimentItemScore" label="分值" width="80" />
       <el-table-column label="状态" width="120">
         <template #default="{ row }">
@@ -49,10 +53,21 @@ onMounted(async () => {
   ])
   experiment.value = expRes.data
   items.value = itemsRes.data
+  // Populate answered status from backend
+  const set = new Set()
+  items.value.forEach(item => {
+    if (item.answered) set.add(item.experimentItemId)
+  })
+  answeredItems.value = set
 })
 
 function hasAnswer(row) {
   return answeredItems.value.has(row.experimentItemId)
+}
+
+const typeMap = { 1: '填空', 2: '单选', 3: '多选', 4: '判断', 5: '简答', 6: '编程', 7: '综合' }
+function typeName(type) {
+  return typeMap[type] || type
 }
 
 function goAnswer(itemId) {

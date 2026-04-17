@@ -105,9 +105,9 @@ DROP TABLE IF EXISTS `t_ex3_item`;
 CREATE TABLE `t_ex3_item` (
   `excercise_item_id` int NOT NULL AUTO_INCREMENT,
   `excercise_id` int NOT NULL,
-  `question` varchar(255) DEFAULT NULL,
-  `options` varchar(255) DEFAULT NULL,
-  `answer` varchar(255) DEFAULT NULL,
+  `question` text DEFAULT NULL,
+  `options` text DEFAULT NULL,
+  `answer` text DEFAULT NULL,
   `type` int DEFAULT NULL,
   PRIMARY KEY (`excercise_item_id`),
   KEY `fk_excercise_id` (`excercise_id`)

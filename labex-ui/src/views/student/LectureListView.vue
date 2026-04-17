@@ -7,9 +7,7 @@
       <el-table-column prop="lectureFiletype" label="文件类型" width="100" />
       <el-table-column label="操作" width="120">
         <template #default="{ row }">
-          <el-button size="small" type="primary">
-            <a :href="api.downloadLecture(row.lectureId)" style="color: inherit; text-decoration: none">下载</a>
-          </el-button>
+          <el-button size="small" type="primary" @click="downloadFile(row)">下载</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -26,4 +24,15 @@ onMounted(async () => {
   const res = await api.listLectures()
   lectures.value = res.data
 })
+
+async function downloadFile(row) {
+  const url = api.downloadLecture(row.lectureId)
+  const resp = await fetch(url)
+  const blob = await resp.blob()
+  const a = document.createElement('a')
+  a.href = URL.createObjectURL(blob)
+  a.download = `${row.lectureName}.${row.lectureFiletype}`
+  a.click()
+  URL.revokeObjectURL(a.href)
+}
 </script>

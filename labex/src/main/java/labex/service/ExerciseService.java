@@ -10,7 +10,10 @@ import labex.mapper.StudentExerciseMapper;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class ExerciseService {
@@ -57,6 +60,32 @@ public class ExerciseService {
     public List<Ex3Item> getExerciseItems(Integer exerciseId) {
         return ex3ItemMapper.selectList(
                 new QueryWrapper<Ex3Item>().eq("excercise_id", exerciseId));
+    }
+
+    public List<Map<String, Object>> getExerciseItemsWithAnswer(Integer exerciseId, Integer studentId) {
+        List<Ex3Item> items = getExerciseItems(exerciseId);
+        if (items.isEmpty()) {
+            return new java.util.ArrayList<>();
+        }
+        List<StudentExercise> answers = studentExerciseMapper.selectList(
+                new QueryWrapper<StudentExercise>()
+                        .eq("student_id", studentId)
+                        .in("item_id", items.stream().map(Ex3Item::getExcerciseItemId).collect(Collectors.toList())));
+        Map<Integer, StudentExercise> answerMap = answers.stream()
+                .collect(Collectors.toMap(StudentExercise::getItemId, a -> a));
+        return items.stream().map(item -> {
+            Map<String, Object> m = new HashMap<>();
+            m.put("excerciseItemId", item.getExcerciseItemId());
+            m.put("excerciseId", item.getExcerciseId());
+            m.put("question", item.getQuestion());
+            m.put("options", item.getOptions());
+            m.put("answer", item.getAnswer());
+            m.put("type", item.getType());
+            StudentExercise se = answerMap.get(item.getExcerciseItemId());
+            m.put("answered", se != null);
+            m.put("studentAnswer", se != null ? (se.getAnswer() != null ? se.getAnswer() : se.getContent()) : null);
+            return m;
+        }).collect(Collectors.toList());
     }
 
     public void addExerciseItem(Ex3Item item) {
