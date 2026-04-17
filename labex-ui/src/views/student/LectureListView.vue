@@ -4,6 +4,9 @@
     <el-table :data="lectures" border stripe style="margin-top: 16px">
       <el-table-column prop="lectureId" label="ID" width="80" />
       <el-table-column prop="lectureName" label="资料名称" />
+      <el-table-column label="资料类型" width="100">
+        <template #default="{ row }">{{ lectureTypes[row.lectureType] || '-' }}</template>
+      </el-table-column>
       <el-table-column prop="lectureFiletype" label="文件类型" width="100" />
       <el-table-column label="操作" width="120">
         <template #default="{ row }">
@@ -19,6 +22,7 @@ import { ref, onMounted } from 'vue'
 import api from '../../api/student'
 
 const lectures = ref([])
+const lectureTypes = { 1: '讲义', 2: '代码', 3: '软件', 4: '参考资料' }
 
 onMounted(async () => {
   const res = await api.listLectures()
