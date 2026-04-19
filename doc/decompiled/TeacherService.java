@@ -216,14 +216,38 @@ public class TeacherService {
      * Save a lecture (create or update) with file upload.
      * Files are stored to ${lecture.path} = /data/labex/lectures/
      */
+    /**
+     * Sanitize a filename to prevent path traversal attacks.
+     * Removes path separators and parent directory references.
+     */
+    private String sanitizeFilename(String filename) {
+        if (filename == null) return "";
+        // Strip any path components, keep only the base name
+        filename = new File(filename).getName();
+        // Remove any remaining suspicious characters
+        filename = filename.replaceAll("[.]{2,}", "");
+        return filename;
+    }
+
     public void saveLecture(Integer id, String name, Integer type,
                             MultipartFile file) {
         String filetype = "";
         if (file != null && !file.isEmpty()) {
-            filetype = file.getOriginalFilename()
-                    .substring(file.getOriginalFilename().lastIndexOf(".") + 1);
+            String originalName = sanitizeFilename(file.getOriginalFilename());
+            if (originalName.contains(".")) {
+                filetype = originalName.substring(originalName.lastIndexOf(".") + 1);
+            }
+            // Sanitize the lecture name to prevent path traversal
+            String safeName = sanitizeFilename(name);
+            if (safeName.isEmpty()) {
+                throw new RuntimeException("Invalid lecture name");
+            }
             try {
-                File dest = new File(lecturePath + name + "." + filetype);
+                File dest = new File(lecturePath + safeName + "." + filetype);
+                // Ensure the destination is within the allowed directory
+                if (!dest.getCanonicalPath().startsWith(new File(lecturePath).getCanonicalPath())) {
+                    throw new RuntimeException("Invalid file path");
+                }
                 dest.getParentFile().mkdirs();
                 file.transferTo(dest);
             } catch (Exception e) {

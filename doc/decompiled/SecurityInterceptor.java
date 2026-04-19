@@ -83,6 +83,15 @@ public class SecurityInterceptor implements HandlerInterceptor {
             throw new LoginAccountException();
         }
 
+        // Role-based access control: prevent cross-role URL access
+        String uri = request.getRequestURI();
+        if (uri.contains("/teacher/") && token.isStudent()) {
+            throw new LoginInvalidException();
+        }
+        if (uri.contains("/student/") && token.isTeacher()) {
+            throw new LoginInvalidException();
+        }
+
         return true;
     }
 
