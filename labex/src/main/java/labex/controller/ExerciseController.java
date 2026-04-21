@@ -61,6 +61,23 @@ public class ExerciseController {
         return Result.ok();
     }
 
+    @PutMapping("/{exerciseId}/items/{itemId}")
+    public Result<Void> updateItem(@PathVariable Integer exerciseId,
+                                    @PathVariable Integer itemId,
+                                    @RequestBody Ex3Item item, HttpSession session) {
+        item.setExcerciseItemId(itemId);
+        item.setExcerciseId(exerciseId);
+        exerciseService.updateExerciseItem(item);
+        return Result.ok();
+    }
+
+    @DeleteMapping("/{exerciseId}/items/{itemId}")
+    public Result<Void> deleteItem(@PathVariable Integer exerciseId,
+                                    @PathVariable Integer itemId, HttpSession session) {
+        exerciseService.deleteExerciseItem(itemId);
+        return Result.ok();
+    }
+
     @DeleteMapping("/{id}")
     public Result<Void> delete(@PathVariable Integer id, HttpSession session) {
         exerciseService.deleteExercise(id);

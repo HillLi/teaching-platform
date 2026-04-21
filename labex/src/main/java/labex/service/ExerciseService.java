@@ -9,6 +9,8 @@ import labex.mapper.Ex3ItemMapper;
 import labex.mapper.StudentExerciseMapper;
 import org.springframework.stereotype.Service;
 
+import labex.common.ScoringUtil;
+
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -90,6 +92,16 @@ public class ExerciseService {
 
     public void addExerciseItem(Ex3Item item) {
         ex3ItemMapper.insert(item);
+    }
+
+    public void updateExerciseItem(Ex3Item item) {
+        ex3ItemMapper.updateById(item);
+    }
+
+    public void deleteExerciseItem(Integer itemId) {
+        studentExerciseMapper.delete(
+                new QueryWrapper<StudentExercise>().eq("item_id", itemId));
+        ex3ItemMapper.deleteById(itemId);
     }
 
     public void answerQuestion(Integer studentId, Integer itemId, Integer type, String answer) {
