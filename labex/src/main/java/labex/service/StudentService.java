@@ -2,14 +2,17 @@ package labex.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import labex.common.BusinessException;
+import labex.common.ScoringUtil;
 import labex.dto.SessionUtil;
 import labex.dto.UserTokenVO;
 import labex.entity.*;
 import labex.mapper.*;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -26,6 +29,9 @@ public class StudentService {
     private final StudentMapper studentMapper;
     private final JdbcTemplate jdbcTemplate;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+
+    @Value("${labex.upload.answers-path}")
+    private String answersPath;
 
     public StudentService(ExperimentMapper experimentMapper,
                           ExperimentItemMapper experimentItemMapper,
@@ -112,24 +118,37 @@ public class StudentService {
 
         LocalDateTime now = LocalDateTime.now();
 
+        // Auto-score objective questions
+        ExperimentItem experimentItem = experimentItemMapper.selectById(itemId);
+        Integer autoScore = null;
+        if (experimentItem != null && ScoringUtil.isAutoScorable(experimentItem.getExperimentItemType())) {
+            autoScore = ScoringUtil.autoScore(
+                    experimentItem.getExperimentItemType(),
+                    experimentItem.getExperimentItemAnswer(),
+                    content,
+                    experimentItem.getExperimentItemScore() != null ? experimentItem.getExperimentItemScore() : 0);
+        }
+
         if (existing == null) {
-            // Create new
             StudentItem item = new StudentItem();
             item.setItemId(itemId);
             item.setStudentId(studentId);
             item.setContent(content);
             item.setFillTime(now);
+            if (autoScore != null) {
+                item.setScore(autoScore);
+                item.setScoreFlag(1);
+            }
             studentItemMapper.insert(item);
-
-            // Log
             saveLog(item.getStudentItemId(), content, now);
         } else {
-            // Update existing
             existing.setContent(content);
             existing.setFillTime(now);
+            if (autoScore != null) {
+                existing.setScore(autoScore);
+                existing.setScoreFlag(1);
+            }
             studentItemMapper.updateById(existing);
-
-            // Log
             saveLog(existing.getStudentItemId(), content, now);
         }
     }
@@ -140,6 +159,41 @@ public class StudentService {
         log.setContent(content);
         log.setFillTime(fillTime);
         studentItemLogMapper.insert(log);
+    }
+
+    public void uploadAnswerFile(Integer itemId, Integer studentId, MultipartFile file) throws java.io.IOException {
+        StudentItem existing = studentItemMapper.selectOne(
+                new QueryWrapper<StudentItem>()
+                        .eq("item_id", itemId)
+                        .eq("student_id", studentId));
+
+        if (existing != null && existing.getScoreFlag() != null && existing.getScoreFlag() == 1) {
+            throw new BusinessException("该题目已批改，无法修改");
+        }
+
+        String originalName = file.getOriginalFilename();
+        String ext = originalName != null && originalName.contains(".")
+                ? originalName.substring(originalName.lastIndexOf(".") + 1) : "";
+        java.io.File dir = new java.io.File(answersPath);
+        if (!dir.exists()) dir.mkdirs();
+        String filename = studentId + "_" + itemId + "." + ext;
+        file.transferTo(new java.io.File(dir, filename));
+
+        LocalDateTime now = LocalDateTime.now();
+        if (existing == null) {
+            StudentItem item = new StudentItem();
+            item.setItemId(itemId);
+            item.setStudentId(studentId);
+            item.setContent("[文件提交: " + filename + "]");
+            item.setFilePath(filename);
+            item.setFillTime(now);
+            studentItemMapper.insert(item);
+        } else {
+            existing.setContent("[文件提交: " + filename + "]");
+            existing.setFilePath(filename);
+            existing.setFillTime(now);
+            studentItemMapper.updateById(existing);
+        }
     }
 
     public List<Map<String, Object>> getMyScores(Integer studentId) {
