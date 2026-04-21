@@ -167,6 +167,12 @@ public class StudentController {
         return Result.ok();
     }
 
+    @GetMapping("/exercises/{id}/score")
+    public Result<Map<String, Object>> getExerciseScore(@PathVariable Integer id, HttpSession session) {
+        UserTokenVO token = verifyStudent(session);
+        return Result.ok(exerciseService.getExerciseStudentScore(id, token.getUserId()));
+    }
+
     // ===== Dashboard =====
 
     @GetMapping("/dashboard/stats")

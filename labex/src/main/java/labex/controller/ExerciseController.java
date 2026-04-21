@@ -78,6 +78,30 @@ public class ExerciseController {
         return Result.ok();
     }
 
+    @GetMapping("/{id}/submissions")
+    public Result<List<Map<String, Object>>> getSubmissions(@PathVariable Integer id, HttpSession session) {
+        return Result.ok(exerciseService.getExerciseSubmissions(id));
+    }
+
+    @GetMapping("/{id}/submissions/{studentId}")
+    public Result<List<Map<String, Object>>> getSubmissionDetail(
+            @PathVariable Integer id, @PathVariable Integer studentId, HttpSession session) {
+        return Result.ok(exerciseService.getExerciseSubmissionDetail(id, studentId));
+    }
+
+    @PostMapping("/scores")
+    public Result<Void> submitScore(@RequestBody Map<String, Object> body, HttpSession session) {
+        Long studentExerciseId = ((Number) body.get("studentExerciseId")).longValue();
+        Integer score = (Integer) body.get("score");
+        exerciseService.submitExerciseScore(studentExerciseId, score);
+        return Result.ok();
+    }
+
+    @GetMapping("/{id}/scores")
+    public Result<List<Map<String, Object>>> getScores(@PathVariable Integer id, HttpSession session) {
+        return Result.ok(exerciseService.getExerciseScores(id));
+    }
+
     @DeleteMapping("/{id}")
     public Result<Void> delete(@PathVariable Integer id, HttpSession session) {
         exerciseService.deleteExercise(id);
