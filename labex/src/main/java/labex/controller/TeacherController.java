@@ -15,6 +15,11 @@ import labex.entity.SysConfig;
 import labex.mapper.SysConfigMapper;
 import javax.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -34,6 +39,9 @@ public class TeacherController {
 
     @Value("${labex.upload.lecture-path}")
     private String lecturePath;
+
+    @Value("${labex.upload.experiment-path}")
+    private String experimentPath;
 
     public TeacherController(TeacherService teacherService, LogService logService, SysConfigMapper sysConfigMapper) {
         this.teacherService = teacherService;
@@ -217,6 +225,30 @@ public class TeacherController {
         verifyTeacher(session);
         teacherService.setItemAnswer(itemId, body.get("answer"));
         return Result.ok();
+    }
+
+    @PostMapping("/experiments/items/{itemId}/attachment")
+    public Result<Void> uploadItemAttachment(@PathVariable Integer itemId,
+                                              @RequestParam MultipartFile file,
+                                              HttpSession session) throws IOException {
+        verifyTeacher(session);
+        teacherService.uploadItemAttachment(itemId, file);
+        return Result.ok();
+    }
+
+    @GetMapping("/reports/items/{studentItemId}/download")
+    public ResponseEntity<Resource> downloadStudentAnswer(
+            @PathVariable Integer studentItemId, HttpSession session) throws IOException {
+        verifyTeacher(session);
+        java.io.File file = teacherService.getStudentAnswerFile(studentItemId);
+        FileSystemResource resource = new FileSystemResource(file);
+        String contentType = java.nio.file.Files.probeContentType(file.toPath());
+        if (contentType == null) contentType = "application/octet-stream";
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(contentType))
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"" + file.getName() + "\"")
+                .body(resource);
     }
 
     // ===== Grading / Reports =====

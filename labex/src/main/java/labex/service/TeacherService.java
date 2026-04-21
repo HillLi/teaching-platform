@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import labex.common.BusinessException;
 import labex.entity.*;
 import labex.mapper.*;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -29,6 +30,9 @@ public class TeacherService {
     private final StudentItemLogMapper studentItemLogMapper;
     private final LectureMapper lectureMapper;
     private final JdbcTemplate jdbcTemplate;
+
+    @Value("${labex.upload.experiment-path}")
+    private String experimentPath;
 
     public TeacherService(ClassMapper classMapper, StudentMapper studentMapper,
                           ExperimentMapper experimentMapper, ExperimentItemMapper experimentItemMapper,
@@ -327,5 +331,30 @@ public class TeacherService {
             }
         }
         return true;
+    }
+
+    public void uploadItemAttachment(Integer itemId, MultipartFile file) throws java.io.IOException {
+        ExperimentItem item = experimentItemMapper.selectById(itemId);
+        if (item == null) throw new BusinessException("题目不存在");
+        String originalName = file.getOriginalFilename();
+        String ext = originalName != null && originalName.contains(".")
+                ? originalName.substring(originalName.lastIndexOf(".") + 1) : "";
+        java.io.File dir = new java.io.File(experimentPath);
+        if (!dir.exists()) dir.mkdirs();
+        String filename = itemId + "_attachment." + ext;
+        file.transferTo(new java.io.File(dir, filename));
+        item.setFilePath(filename);
+        experimentItemMapper.updateById(item);
+    }
+
+    public java.io.File getStudentAnswerFile(Integer studentItemId) {
+        StudentItem si = studentItemMapper.selectById(studentItemId);
+        if (si == null) throw new BusinessException("学生提交不存在");
+        if (si.getFilePath() == null || si.getFilePath().isEmpty()) {
+            throw new BusinessException("该提交无附件");
+        }
+        java.io.File file = new java.io.File(new java.io.File(experimentPath).getParent(), "answers/" + si.getFilePath());
+        if (!file.exists()) throw new BusinessException("文件不存在");
+        return file;
     }
 }

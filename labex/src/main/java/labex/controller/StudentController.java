@@ -16,6 +16,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
@@ -34,6 +35,9 @@ public class StudentController {
 
     @Value("${labex.upload.lecture-path}")
     private String lecturePath;
+
+    @Value("${labex.upload.answers-path}")
+    private String answersPath;
 
     public StudentController(StudentService studentService, ExerciseService exerciseService) {
         this.studentService = studentService;
@@ -83,6 +87,15 @@ public class StudentController {
                                     HttpSession session) {
         UserTokenVO token = verifyStudent(session);
         studentService.saveAnswer(itemId, token.getUserId(), dto.getContent());
+        return Result.ok();
+    }
+
+    @PostMapping("/items/{itemId}/upload")
+    public Result<Void> uploadAnswer(@PathVariable Integer itemId,
+                                      @RequestParam MultipartFile file,
+                                      HttpSession session) throws IOException {
+        UserTokenVO token = verifyStudent(session);
+        studentService.uploadAnswerFile(itemId, token.getUserId(), file);
         return Result.ok();
     }
 
