@@ -17,5 +17,6 @@ public class ExperimentItem {
     private Integer experimentId;
     private String experimentItemAnswer;
     private Integer experimentItemScore;
+    private String filePath;
     private Integer state;
 }

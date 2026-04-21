@@ -17,4 +17,5 @@ public class StudentItem {
     private Integer score;
     private LocalDateTime fillTime;
     private Integer scoreFlag;
+    private String filePath;
 }
