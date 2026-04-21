@@ -1,0 +1,339 @@
+package labex.service;
+
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import labex.common.BusinessException;
+import labex.common.ScoringUtil;
+import labex.dto.ExamSubmitDTO;
+import labex.dto.ExamSubmitItemDTO;
+import labex.entity.*;
+import labex.mapper.*;
+import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
+
+@Service
+public class ExamService {
+
+    private final ExamMapper examMapper;
+    private final ExamItemMapper examItemMapper;
+    private final StudentExamAnswerMapper studentExamAnswerMapper;
+    private final ExamSubmissionMapper examSubmissionMapper;
+
+    public ExamService(ExamMapper examMapper, ExamItemMapper examItemMapper,
+                       StudentExamAnswerMapper studentExamAnswerMapper,
+                       ExamSubmissionMapper examSubmissionMapper) {
+        this.examMapper = examMapper;
+        this.examItemMapper = examItemMapper;
+        this.studentExamAnswerMapper = studentExamAnswerMapper;
+        this.examSubmissionMapper = examSubmissionMapper;
+    }
+
+    // ===== Teacher: Exam CRUD =====
+
+    public List<Exam> listExams() {
+        return examMapper.selectList(new QueryWrapper<Exam>().orderByDesc("id"));
+    }
+
+    public Exam getExam(Integer id) {
+        Exam exam = examMapper.selectById(id);
+        if (exam == null) throw new BusinessException("考试不存在");
+        return exam;
+    }
+
+    public void addExam(Exam exam) {
+        examMapper.insert(exam);
+    }
+
+    public void updateExam(Exam exam) {
+        examMapper.updateById(exam);
+    }
+
+    public void deleteExam(Integer id) {
+        List<ExamItem> items = examItemMapper.selectList(
+                new QueryWrapper<ExamItem>().eq("exam_id", id));
+        for (ExamItem item : items) {
+            studentExamAnswerMapper.delete(
+                    new QueryWrapper<StudentExamAnswer>().eq("exam_item_id", item.getId()));
+        }
+        examItemMapper.delete(new QueryWrapper<ExamItem>().eq("exam_id", id));
+        examSubmissionMapper.delete(new QueryWrapper<ExamSubmission>().eq("exam_id", id));
+        examMapper.deleteById(id);
+    }
+
+    // ===== Teacher: Exam Items =====
+
+    public List<ExamItem> getExamItems(Integer examId) {
+        return examItemMapper.selectList(
+                new QueryWrapper<ExamItem>().eq("exam_id", examId));
+    }
+
+    public void addExamItem(ExamItem item) {
+        examItemMapper.insert(item);
+    }
+
+    public void updateExamItem(ExamItem item) {
+        examItemMapper.updateById(item);
+    }
+
+    public void deleteExamItem(Integer itemId) {
+        studentExamAnswerMapper.delete(
+                new QueryWrapper<StudentExamAnswer>().eq("exam_item_id", itemId));
+        examItemMapper.deleteById(itemId);
+    }
+
+    // ===== Teacher: Grading =====
+
+    public List<Map<String, Object>> getExamSubmissions(Integer examId) {
+        List<ExamSubmission> submissions = examSubmissionMapper.selectList(
+                new QueryWrapper<ExamSubmission>().eq("exam_id", examId));
+        return submissions.stream().map(sub -> {
+            Map<String, Object> m = new HashMap<>();
+            m.put("id", sub.getId());
+            m.put("studentId", sub.getStudentId());
+            m.put("startTime", sub.getStartTime());
+            m.put("submitTime", sub.getSubmitTime());
+            m.put("totalScore", sub.getTotalScore());
+            m.put("status", sub.getStatus());
+            return m;
+        }).collect(Collectors.toList());
+    }
+
+    public List<Map<String, Object>> getExamSubmissionDetail(Integer examId, Integer studentId) {
+        List<ExamItem> items = getExamItems(examId);
+        List<StudentExamAnswer> answers = studentExamAnswerMapper.selectList(
+                new QueryWrapper<StudentExamAnswer>()
+                        .in("exam_item_id", items.stream().map(ExamItem::getId).collect(Collectors.toList()))
+                        .eq("student_id", studentId));
+
+        Map<Integer, StudentExamAnswer> answerMap = answers.stream()
+                .collect(Collectors.toMap(StudentExamAnswer::getExamItemId, a -> a));
+
+        return items.stream().map(item -> {
+            Map<String, Object> m = new HashMap<>();
+            m.put("itemId", item.getId());
+            m.put("type", item.getType());
+            m.put("content", item.getContent());
+            m.put("options", item.getOptions());
+            m.put("maxScore", item.getScore());
+            m.put("referenceAnswer", item.getAnswer());
+
+            StudentExamAnswer ans = answerMap.get(item.getId());
+            m.put("studentAnswer", ans != null ? ans.getAnswer() : null);
+            m.put("studentContent", ans != null ? ans.getContent() : null);
+            m.put("studentFilePath", ans != null ? ans.getFilePath() : null);
+            m.put("score", ans != null ? ans.getScore() : null);
+            m.put("autoScored", ans != null ? ans.getAutoScored() : null);
+            m.put("answerId", ans != null ? ans.getId() : null);
+            return m;
+        }).collect(Collectors.toList());
+    }
+
+    public void submitExamScore(Integer answerId, Integer score) {
+        StudentExamAnswer ans = studentExamAnswerMapper.selectById(answerId);
+        if (ans == null) throw new BusinessException("学生答案不存在");
+        ans.setScore(score);
+        ans.setAutoScored(0);
+        studentExamAnswerMapper.updateById(ans);
+
+        ExamItem item = examItemMapper.selectById(ans.getExamItemId());
+        checkAndFinalizeSubmission(item.getExamId(), ans.getStudentId());
+    }
+
+    private void checkAndFinalizeSubmission(Integer examId, Integer studentId) {
+        List<ExamItem> items = getExamItems(examId);
+        List<StudentExamAnswer> answers = studentExamAnswerMapper.selectList(
+                new QueryWrapper<StudentExamAnswer>()
+                        .in("exam_item_id", items.stream().map(ExamItem::getId).collect(Collectors.toList()))
+                        .eq("student_id", studentId));
+
+        boolean allGraded = true;
+        BigDecimal total = BigDecimal.ZERO;
+        for (ExamItem item : items) {
+            StudentExamAnswer ans = answers.stream()
+                    .filter(a -> a.getExamItemId().equals(item.getId()))
+                    .findFirst().orElse(null);
+            if (ans == null || ans.getScore() == null) {
+                allGraded = false;
+                break;
+            }
+            total = total.add(BigDecimal.valueOf(ans.getScore()));
+        }
+
+        ExamSubmission submission = examSubmissionMapper.selectOne(
+                new QueryWrapper<ExamSubmission>()
+                        .eq("exam_id", examId)
+                        .eq("student_id", studentId));
+        if (submission != null) {
+            submission.setTotalScore(total);
+            if (allGraded) {
+                submission.setStatus(2);
+            }
+            examSubmissionMapper.updateById(submission);
+        }
+    }
+
+    // ===== Teacher: Score Summary =====
+
+    public List<Map<String, Object>> getExamScores(Integer examId) {
+        List<ExamSubmission> submissions = examSubmissionMapper.selectList(
+                new QueryWrapper<ExamSubmission>().eq("exam_id", examId));
+        return submissions.stream().map(sub -> {
+            Map<String, Object> m = new HashMap<>();
+            m.put("studentId", sub.getStudentId());
+            m.put("totalScore", sub.getTotalScore());
+            m.put("status", sub.getStatus());
+            m.put("submitTime", sub.getSubmitTime());
+            return m;
+        }).collect(Collectors.toList());
+    }
+
+    // ===== Student: Exam =====
+
+    public List<Exam> listAvailableExams() {
+        LocalDateTime now = LocalDateTime.now();
+        return examMapper.selectList(
+                new QueryWrapper<Exam>()
+                        .le("start_time", now)
+                        .ge("end_time", now)
+                        .orderByAsc("start_time"));
+    }
+
+    public void startExam(Integer examId, Integer studentId) {
+        Exam exam = getExam(examId);
+        LocalDateTime now = LocalDateTime.now();
+        if (now.isBefore(exam.getStartTime())) {
+            throw new BusinessException("考试尚未开始");
+        }
+        if (now.isAfter(exam.getEndTime())) {
+            throw new BusinessException("考试已结束");
+        }
+
+        ExamSubmission existing = examSubmissionMapper.selectOne(
+                new QueryWrapper<ExamSubmission>()
+                        .eq("exam_id", examId)
+                        .eq("student_id", studentId));
+        if (existing != null && existing.getSubmitTime() != null) {
+            throw new BusinessException("已提交过考试");
+        }
+
+        if (existing == null) {
+            ExamSubmission sub = new ExamSubmission();
+            sub.setExamId(examId);
+            sub.setStudentId(studentId);
+            sub.setStartTime(now);
+            sub.setStatus(0);
+            examSubmissionMapper.insert(sub);
+        }
+    }
+
+    public List<Map<String, Object>> getStudentExamItems(Integer examId, Integer studentId) {
+        Exam exam = getExam(examId);
+        List<ExamItem> items = getExamItems(examId);
+
+        ExamSubmission sub = examSubmissionMapper.selectOne(
+                new QueryWrapper<ExamSubmission>()
+                        .eq("exam_id", examId)
+                        .eq("student_id", studentId));
+        if (sub == null) {
+            throw new BusinessException("请先开始考试");
+        }
+        if (sub.getSubmitTime() != null) {
+            throw new BusinessException("已提交过考试");
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        if (now.isAfter(exam.getEndTime())) {
+            throw new BusinessException("考试已结束");
+        }
+        if (exam.getDuration() != null && sub.getStartTime() != null) {
+            LocalDateTime deadline = sub.getStartTime().plusMinutes(exam.getDuration());
+            if (now.isAfter(deadline)) {
+                throw new BusinessException("考试时长已到");
+            }
+        }
+
+        return items.stream().map(item -> {
+            Map<String, Object> m = new HashMap<>();
+            m.put("id", item.getId());
+            m.put("type", item.getType());
+            m.put("content", item.getContent());
+            m.put("options", item.getOptions());
+            m.put("score", item.getScore());
+            return m;
+        }).collect(Collectors.toList());
+    }
+
+    public void submitExam(Integer examId, Integer studentId, ExamSubmitDTO dto) {
+        Exam exam = getExam(examId);
+
+        ExamSubmission sub = examSubmissionMapper.selectOne(
+                new QueryWrapper<ExamSubmission>()
+                        .eq("exam_id", examId)
+                        .eq("student_id", studentId));
+        if (sub == null) throw new BusinessException("请先开始考试");
+        if (sub.getSubmitTime() != null) throw new BusinessException("已提交过考试");
+
+        LocalDateTime now = LocalDateTime.now();
+        if (now.isAfter(exam.getEndTime())) {
+            throw new BusinessException("考试已结束，无法提交");
+        }
+        if (exam.getDuration() != null && sub.getStartTime() != null) {
+            LocalDateTime deadline = sub.getStartTime().plusMinutes(exam.getDuration());
+            if (now.isAfter(deadline)) {
+                throw new BusinessException("考试时长已到，无法提交");
+            }
+        }
+
+        for (ExamSubmitItemDTO item : dto.getAnswers()) {
+            ExamItem examItem = examItemMapper.selectById(item.getExamItemId());
+            if (examItem == null || !examItem.getExamId().equals(examId)) continue;
+
+            StudentExamAnswer ans = new StudentExamAnswer();
+            ans.setExamItemId(item.getExamItemId());
+            ans.setStudentId(studentId);
+            ans.setSubmitTime(now);
+
+            int type = examItem.getType();
+            if (type == 1 || type == 2 || type == 3 || type == 4) {
+                ans.setAnswer(item.getAnswer());
+            } else {
+                ans.setContent(item.getAnswer());
+            }
+
+            if (ScoringUtil.isAutoScorable(type)) {
+                Integer autoScore = ScoringUtil.autoScore(type, examItem.getAnswer(),
+                        item.getAnswer(), examItem.getScore());
+                if (autoScore != null) {
+                    ans.setScore(autoScore);
+                    ans.setAutoScored(1);
+                }
+            }
+
+            studentExamAnswerMapper.insert(ans);
+        }
+
+        sub.setSubmitTime(now);
+        sub.setStatus(1);
+        examSubmissionMapper.updateById(sub);
+
+        checkAndFinalizeSubmission(examId, studentId);
+    }
+
+    public Map<String, Object> getStudentExamScore(Integer examId, Integer studentId) {
+        ExamSubmission sub = examSubmissionMapper.selectOne(
+                new QueryWrapper<ExamSubmission>()
+                        .eq("exam_id", examId)
+                        .eq("student_id", studentId));
+        if (sub == null) throw new BusinessException("未参加该考试");
+        if (sub.getStatus() == null || sub.getStatus() < 2) {
+            throw new BusinessException("成绩尚未公布");
+        }
+        Map<String, Object> result = new HashMap<>();
+        result.put("totalScore", sub.getTotalScore());
+        result.put("status", sub.getStatus());
+        return result;
+    }
+}
