@@ -8,6 +8,8 @@ import labex.dto.AnswerDTO;
 import labex.entity.*;
 import labex.service.StudentService;
 import labex.service.ExerciseService;
+import labex.service.ExamService;
+import labex.dto.ExamSubmitDTO;
 import javax.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
@@ -32,6 +34,7 @@ public class StudentController {
 
     private final StudentService studentService;
     private final ExerciseService exerciseService;
+    private final ExamService examService;
 
     @Value("${labex.upload.lecture-path}")
     private String lecturePath;
@@ -39,9 +42,10 @@ public class StudentController {
     @Value("${labex.upload.answers-path}")
     private String answersPath;
 
-    public StudentController(StudentService studentService, ExerciseService exerciseService) {
+    public StudentController(StudentService studentService, ExerciseService exerciseService, ExamService examService) {
         this.studentService = studentService;
         this.exerciseService = exerciseService;
+        this.examService = examService;
     }
 
     private UserTokenVO verifyStudent(HttpSession session) {
@@ -171,6 +175,42 @@ public class StudentController {
     public Result<Map<String, Object>> getExerciseScore(@PathVariable Integer id, HttpSession session) {
         UserTokenVO token = verifyStudent(session);
         return Result.ok(exerciseService.getExerciseStudentScore(id, token.getUserId()));
+    }
+
+    // ===== Exams (Student) =====
+
+    @GetMapping("/exams")
+    public Result<List<Exam>> listExams(HttpSession session) {
+        verifyStudent(session);
+        return Result.ok(examService.listAvailableExams());
+    }
+
+    @PostMapping("/exams/{id}/start")
+    public Result<Void> startExam(@PathVariable Integer id, HttpSession session) {
+        UserTokenVO token = verifyStudent(session);
+        examService.startExam(id, token.getUserId());
+        return Result.ok();
+    }
+
+    @GetMapping("/exams/{id}/items")
+    public Result<List<Map<String, Object>>> getExamItems(@PathVariable Integer id, HttpSession session) {
+        UserTokenVO token = verifyStudent(session);
+        return Result.ok(examService.getStudentExamItems(id, token.getUserId()));
+    }
+
+    @PostMapping("/exams/{id}/submit")
+    public Result<Void> submitExam(@PathVariable Integer id,
+                                    @RequestBody ExamSubmitDTO dto,
+                                    HttpSession session) {
+        UserTokenVO token = verifyStudent(session);
+        examService.submitExam(id, token.getUserId(), dto);
+        return Result.ok();
+    }
+
+    @GetMapping("/exams/{id}/score")
+    public Result<Map<String, Object>> getExamScore(@PathVariable Integer id, HttpSession session) {
+        UserTokenVO token = verifyStudent(session);
+        return Result.ok(examService.getStudentExamScore(id, token.getUserId()));
     }
 
     // ===== Dashboard =====
