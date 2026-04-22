@@ -61,12 +61,20 @@ public class ScoringUtil {
     }
 
     private static List<String> sortedList(String csv) {
-        String[] parts = csv.toUpperCase().split("[,，]");
+        String input = csv.toUpperCase().trim();
         List<String> list = new ArrayList<>();
-        for (String p : parts) {
-            String trimmed = p.trim();
-            if (!trimmed.isEmpty()) {
-                list.add(trimmed);
+        if (input.contains(",") || input.contains("，")) {
+            for (String p : input.split("[,，]")) {
+                String trimmed = p.trim();
+                if (!trimmed.isEmpty()) {
+                    list.add(trimmed);
+                }
+            }
+        } else {
+            for (char c : input.toCharArray()) {
+                if (Character.isLetterOrDigit(c)) {
+                    list.add(String.valueOf(c));
+                }
             }
         }
         list.sort(String::compareTo);
