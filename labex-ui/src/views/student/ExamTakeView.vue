@@ -49,11 +49,15 @@
         <RichTextEditor v-model="answers[item.id]" :height="200" />
       </div>
       <!-- 填空 type=1 -->
-      <div v-else-if="item.type === 1" style="margin-top: 8px">
-        <div v-for="(_, bi) in getFillBlanks(item.id)" :key="bi" style="display: flex; align-items: center; margin-bottom: 8px">
-          <span style="margin-right: 8px; white-space: nowrap">第 {{ bi + 1 }} 空：</span>
-          <el-input v-model="fillAnswers[item.id][bi]" placeholder="请输入答案" style="width: 300px" />
-        </div>
+      <div v-else-if="item.type === 1" style="margin-top: 8px; line-height: 2.2; font-size: 15px">
+        <template v-for="(segment, si) in getQuestionSegments(item)" :key="si">
+          <span>{{ segment }}</span>
+          <input v-if="si < getBlankCount(item)"
+            v-model="getFillBlanks(item.id)[si]"
+            class="inline-blank"
+            :placeholder="'第' + (si+1) + '空'"
+          />
+        </template>
       </div>
       <!-- 其他 -->
       <div v-else style="margin-top: 8px">
@@ -95,6 +99,20 @@ function parseOptions(options) {
 function getFillBlanks(itemId) {
   if (!fillAnswers[itemId]) fillAnswers[itemId] = ['']
   return fillAnswers[itemId]
+}
+
+function getQuestionSegments(item) {
+  const text = item.content || ''
+  if (!text || item.type !== 1) return [text || '']
+  return text.split(/_{2,}/)
+}
+
+function getBlankCount(item) {
+  const segs = getQuestionSegments(item)
+  const count = Math.max(segs.length - 1, 1)
+  const blanks = getFillBlanks(item.id)
+  while (blanks.length < count) blanks.push('')
+  return count
 }
 
 function formatCountdown(seconds) {
@@ -165,3 +183,25 @@ async function submitExam() {
   }
 }
 </script>
+
+<style scoped>
+.inline-blank {
+  border: none;
+  border-bottom: 2px solid #409eff;
+  outline: none;
+  width: 120px;
+  padding: 0 4px;
+  font-size: 15px;
+  text-align: center;
+  background: transparent;
+  color: #303133;
+  transition: border-color 0.3s;
+}
+.inline-blank:focus {
+  border-bottom-color: #66b1ff;
+}
+.inline-blank::placeholder {
+  color: #c0c4cc;
+  font-size: 12px;
+}
+</style>

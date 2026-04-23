@@ -55,13 +55,16 @@
         </el-upload>
       </div>
       <!-- 填空 type=1 -->
-      <div v-else-if="itemType === 1" style="margin-top: 8px">
-        <div v-for="(_, idx) in fillBlanks" :key="idx" style="display: flex; align-items: center; margin-bottom: 8px">
-          <span style="margin-right: 8px; white-space: nowrap">第 {{ idx + 1 }} 空：</span>
-          <el-input v-model="fillBlanks[idx]" placeholder="请输入答案" :disabled="graded" style="width: 300px" />
-        </div>
-        <el-button size="small" @click="addBlank" :disabled="graded">增加空</el-button>
-        <el-button size="small" type="danger" @click="removeBlank" :disabled="graded || fillBlanks.length <= 1">减少空</el-button>
+      <div v-else-if="itemType === 1" style="margin-top: 8px; line-height: 2.2; font-size: 15px">
+        <template v-for="(segment, idx) in questionSegments" :key="idx">
+          <span>{{ segment }}</span>
+          <input v-if="idx < blankCount"
+            v-model="fillBlanks[idx]"
+            :disabled="graded"
+            class="inline-blank"
+            :placeholder="'第' + (idx+1) + '空'"
+          />
+        </template>
       </div>
       <!-- 其他 -->
       <el-input v-else v-model="content" type="textarea" :rows="5" placeholder="请输入答案..." :disabled="graded" />
@@ -100,14 +103,23 @@ let autoSaveTimer = null
 const itemType = computed(() => item.value?.experimentItemType)
 const uploadUrl = `/api/student/items/${itemId}/upload`
 
+const questionSegments = computed(() => {
+  const text = item.value?.experimentItemName || item.value?.experimentItemContent || ''
+  if (!text || itemType.value !== 1) return [text || '']
+  return text.split(/_{2,}/)
+})
+const blankCount = computed(() => Math.max(questionSegments.value.length - 1, 1))
+
 const options = computed(() => {
   const raw = item.value?.experimentItemContent
   if (!raw || (itemType.value !== 2 && itemType.value !== 3)) return []
   return raw.includes('||') ? raw.split('||') : raw.split(',')
 })
 
-function addBlank() { fillBlanks.push('') }
-function removeBlank() { if (fillBlanks.length > 1) fillBlanks.pop() }
+function syncBlankCount() {
+  while (fillBlanks.length < blankCount.value) fillBlanks.push('')
+  while (fillBlanks.length > blankCount.value) fillBlanks.pop()
+}
 
 function serializeAnswer() {
   if (itemType.value === 3) {
@@ -117,6 +129,7 @@ function serializeAnswer() {
     return answer.value
   }
   if (itemType.value === 1) {
+    syncBlankCount()
     return fillBlanks.join('|')
   }
   return content.value
@@ -132,6 +145,7 @@ function restoreAnswer(saved) {
     const parts = saved.split('|')
     fillBlanks.length = 0
     parts.forEach(p => fillBlanks.push(p))
+    syncBlankCount()
   } else {
     content.value = saved
   }
@@ -185,3 +199,30 @@ async function saveAndBack() {
   router.back()
 }
 </script>
+
+<style scoped>
+.inline-blank {
+  border: none;
+  border-bottom: 2px solid #409eff;
+  outline: none;
+  width: 120px;
+  padding: 0 4px;
+  font-size: 15px;
+  text-align: center;
+  background: transparent;
+  color: #303133;
+  transition: border-color 0.3s;
+}
+.inline-blank:focus {
+  border-bottom-color: #66b1ff;
+}
+.inline-blank:disabled {
+  border-bottom-color: #c0c4cc;
+  color: #606266;
+  background: #f5f7fa;
+}
+.inline-blank::placeholder {
+  color: #c0c4cc;
+  font-size: 12px;
+}
+</style>
