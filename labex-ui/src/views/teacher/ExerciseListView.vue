@@ -8,11 +8,12 @@
       <el-table-column prop="id" label="ID" width="80" />
       <el-table-column prop="name" label="练习名称" />
       <el-table-column prop="description" label="描述" />
-      <el-table-column label="操作" width="250">
+      <el-table-column label="操作" width="300">
         <template #default="{ row }">
           <el-button size="small" @click="viewItems(row)">题目</el-button>
           <el-button size="small" @click="editExercise(row)">编辑</el-button>
           <el-button size="small" type="danger" @click="handleDelete(row.id)">删除</el-button>
+          <el-button size="small" type="warning" @click="viewSubmissions(row)">批改</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -32,8 +33,9 @@
       </template>
     </el-dialog>
 
-    <el-dialog v-model="itemDialogVisible" title="练习题目" width="700">
-      <el-button size="small" type="primary" @click="addItemDialog = true" style="margin-bottom: 10px">新增题目</el-button>
+    <!-- 题目管理对话框 -->
+    <el-dialog v-model="itemDialogVisible" title="练习题目" width="750">
+      <el-button size="small" type="primary" @click="showAddItemDialog" style="margin-bottom: 10px">新增题目</el-button>
       <el-table :data="items" border>
         <el-table-column type="index" label="序号" width="60" />
         <el-table-column label="题目" min-width="120">
@@ -60,9 +62,16 @@
         <el-table-column label="类型" width="70">
           <template #default="{ row }">{{ getTypeName(row.type) }}</template>
         </el-table-column>
+        <el-table-column label="操作" width="140">
+          <template #default="{ row }">
+            <el-button size="small" @click="editItem(row)">编辑</el-button>
+            <el-button size="small" type="danger" @click="handleDeleteItem(row)">删除</el-button>
+          </template>
+        </el-table-column>
       </el-table>
     </el-dialog>
 
+    <!-- 新增/编辑题目对话框 -->
     <el-dialog v-model="addItemDialog" :title="editingItem ? '编辑题目' : '新增题目'" width="500">
       <el-form :model="itemForm" label-width="80px">
         <el-form-item label="题型">
@@ -71,6 +80,10 @@
           </el-select>
         </el-form-item>
         <el-form-item label="题目"><el-input v-model="itemForm.question" type="textarea" :rows="2" /></el-form-item>
+        <!-- 填空题提示 -->
+        <el-alert v-if="itemForm.type === 1" type="info" :closable="false" style="margin-bottom: 12px">
+          多个空用 | 分隔，如：答案1|答案2|答案3
+        </el-alert>
         <!-- 单选/多选：动态选项列表 -->
         <template v-if="itemForm.type === 2 || itemForm.type === 3">
           <el-form-item label="选项">
@@ -134,10 +147,12 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { Delete } from '@element-plus/icons-vue'
 import api from '../../api/teacher'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
+const router = useRouter()
 const exercises = ref([])
 const questionTypes = ref([])
 const dialogVisible = ref(false)
@@ -213,6 +228,38 @@ async function viewItems(row) {
   itemDialogVisible.value = true
 }
 
+function parseOptions(optionsStr) {
+  if (!optionsStr) return ['', '']
+  return optionsStr.split(',').map(s => s.trim())
+}
+
+function showAddItemDialog() {
+  editingItem.value = null
+  itemForm.value = { question: '', optionList: ['', ''], answer: '', multiAnswer: [], type: 2 }
+  addItemDialog.value = true
+}
+
+function editItem(row) {
+  editingItem.value = row
+  const parsed = {
+    question: row.question || '',
+    type: row.type,
+    answer: row.answer || '',
+    optionList: parseOptions(row.options),
+    multiAnswer: row.type === 3 ? (row.answer || '').split('') : []
+  }
+  itemForm.value = parsed
+  addItemDialog.value = true
+}
+
+async function handleDeleteItem(row) {
+  await ElMessageBox.confirm('确定删除该题目？', '提示', { type: 'warning' })
+  await api.deleteExerciseItem(currentExId.value, row.excerciseItemId)
+  ElMessage.success('删除成功')
+  const res = await api.getExerciseItems(currentExId.value)
+  items.value = res.data
+}
+
 function onItemTypeChange(type) {
   if (type === 2 || type === 3) {
     if (!itemForm.value.optionList || itemForm.value.optionList.length < 2) {
@@ -230,23 +277,24 @@ async function saveItem() {
     type: itemForm.value.type
   }
   if (itemForm.value.type === 2) {
-    // 单选：选项逗号拼接，答案为字母
     data.options = itemForm.value.optionList.filter(o => o.trim()).join(',')
     data.answer = itemForm.value.answer
   } else if (itemForm.value.type === 3) {
-    // 多选：选项逗号拼接，答案为字母拼接
     data.options = itemForm.value.optionList.filter(o => o.trim()).join(',')
     data.answer = (itemForm.value.multiAnswer || []).sort().join('')
-  } else if (itemForm.value.type === 4) {
-    // 判断
-    data.answer = itemForm.value.answer
   } else {
-    // 填空/简答/编程/综合
     data.answer = itemForm.value.answer
   }
-  await api.addExerciseItem(currentExId.value, data)
-  ElMessage.success('题目已添加')
+
+  if (editingItem.value) {
+    await api.updateExerciseItem(currentExId.value, editingItem.value.excerciseItemId, data)
+    ElMessage.success('题目已更新')
+  } else {
+    await api.addExerciseItem(currentExId.value, data)
+    ElMessage.success('题目已添加')
+  }
   addItemDialog.value = false
+  editingItem.value = null
   resetItemForm()
   const res = await api.getExerciseItems(currentExId.value)
   items.value = res.data
@@ -261,5 +309,9 @@ async function handleDelete(id) {
   await api.deleteExercise(id)
   ElMessage.success('删除成功')
   loadData()
+}
+
+function viewSubmissions(row) {
+  router.push(`/teacher/exercise-grading/${row.id}`)
 }
 </script>

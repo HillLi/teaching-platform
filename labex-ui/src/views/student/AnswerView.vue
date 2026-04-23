@@ -38,8 +38,32 @@
       <!-- 编程 type=6 -->
       <CodeEditor v-else-if="itemType === 6" v-model="content" language="java" :height="350" :disabled="graded" />
       <!-- 简答 type=5 / 综合 type=7 -->
-      <RichTextEditor v-else-if="itemType === 5 || itemType === 7" v-model="content" :height="350" :disabled="graded" />
-      <!-- 填空/其他 -->
+      <div v-else-if="itemType === 5 || itemType === 7" style="margin-top: 8px">
+        <RichTextEditor v-model="content" :height="250" :disabled="graded" />
+        <el-upload
+          :action="uploadUrl"
+          :limit="1"
+          :on-success="onUploadSuccess"
+          :on-error="onUploadError"
+          :disabled="graded"
+          style="margin-top: 12px"
+        >
+          <el-button size="small" type="primary" :disabled="graded">上传附件</el-button>
+          <template #tip>
+            <div class="el-upload__tip">支持上传文档作为答案</div>
+          </template>
+        </el-upload>
+      </div>
+      <!-- 填空 type=1 -->
+      <div v-else-if="itemType === 1" style="margin-top: 8px">
+        <div v-for="(_, idx) in fillBlanks" :key="idx" style="display: flex; align-items: center; margin-bottom: 8px">
+          <span style="margin-right: 8px; white-space: nowrap">第 {{ idx + 1 }} 空：</span>
+          <el-input v-model="fillBlanks[idx]" placeholder="请输入答案" :disabled="graded" style="width: 300px" />
+        </div>
+        <el-button size="small" @click="addBlank" :disabled="graded">增加空</el-button>
+        <el-button size="small" type="danger" @click="removeBlank" :disabled="graded || fillBlanks.length <= 1">减少空</el-button>
+      </div>
+      <!-- 其他 -->
       <el-input v-else v-model="content" type="textarea" :rows="5" placeholder="请输入答案..." :disabled="graded" />
       <div style="margin-top: 16px; display: flex; justify-content: space-between; align-items: center">
         <span style="color: #999; font-size: 12px">上次保存: {{ lastSaveTime || '未保存' }}</span>
@@ -54,7 +78,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { ref, reactive, onMounted, onUnmounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import api from '../../api/student'
 import { ElMessage } from 'element-plus'
@@ -68,11 +92,13 @@ const item = ref(null)
 const content = ref('')
 const answer = ref('')
 const multiAnswer = ref([])
+const fillBlanks = reactive([''])
 const graded = ref(false)
 const lastSaveTime = ref('')
 let autoSaveTimer = null
 
 const itemType = computed(() => item.value?.experimentItemType)
+const uploadUrl = `/api/student/items/${itemId}/upload`
 
 const options = computed(() => {
   const raw = item.value?.experimentItemContent
@@ -80,7 +106,9 @@ const options = computed(() => {
   return raw.includes('||') ? raw.split('||') : raw.split(',')
 })
 
-/** Serialize current answer state into a single string for saving */
+function addBlank() { fillBlanks.push('') }
+function removeBlank() { if (fillBlanks.length > 1) fillBlanks.pop() }
+
 function serializeAnswer() {
   if (itemType.value === 3) {
     return (multiAnswer.value || []).sort().join('')
@@ -88,20 +116,29 @@ function serializeAnswer() {
   if (itemType.value === 2 || itemType.value === 4) {
     return answer.value
   }
+  if (itemType.value === 1) {
+    return fillBlanks.join('|')
+  }
   return content.value
 }
 
-/** Restore saved content into the correct reactive variable */
 function restoreAnswer(saved) {
   if (!saved) return
   if (itemType.value === 3) {
     multiAnswer.value = saved.split('')
   } else if (itemType.value === 2 || itemType.value === 4) {
     answer.value = saved
+  } else if (itemType.value === 1) {
+    const parts = saved.split('|')
+    fillBlanks.length = 0
+    parts.forEach(p => fillBlanks.push(p))
   } else {
     content.value = saved
   }
 }
+
+function onUploadSuccess() { ElMessage.success('文件上传成功') }
+function onUploadError() { ElMessage.error('文件上传失败') }
 
 onMounted(async () => {
   try {

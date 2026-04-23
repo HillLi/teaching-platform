@@ -2,7 +2,7 @@
   <div>
     <div style="display: flex; justify-content: space-between; margin-bottom: 16px">
       <h2>答题</h2>
-      <el-button @click="$router.back()">返回题库</el-button>
+      <el-button @click="$router.back()">返回作业列表</el-button>
     </div>
     <el-card v-for="(item, idx) in items" :key="item.excerciseItemId" style="margin-bottom: 16px">
       <h3 style="margin-top: 0">
@@ -45,7 +45,14 @@
       <div v-else-if="item.type === 5 || item.type === 7" style="margin-top: 8px">
         <RichTextEditor v-model="answers[item.excerciseItemId]" :height="250" />
       </div>
-      <!-- 填空 type=1 / 其他 -->
+      <!-- 填空 type=1 -->
+      <div v-else-if="item.type === 1" style="margin-top: 8px">
+        <div v-for="(_, bi) in getFillBlanks(item.excerciseItemId)" :key="bi" style="display: flex; align-items: center; margin-bottom: 8px">
+          <span style="margin-right: 8px; white-space: nowrap">第 {{ bi + 1 }} 空：</span>
+          <el-input v-model="fillAnswers[item.excerciseItemId][bi]" placeholder="请输入答案" style="width: 300px" />
+        </div>
+      </div>
+      <!-- 其他 -->
       <div v-else style="margin-top: 8px">
         <el-input v-model="answers[item.excerciseItemId]" type="textarea" :rows="3" placeholder="请输入答案..." />
       </div>
@@ -78,6 +85,7 @@ const exerciseId = route.params.id
 const items = ref([])
 const answers = reactive({})
 const multiAnswers = reactive({})
+const fillAnswers = reactive({})
 const answeredMap = reactive({})
 const showAnswerMap = reactive({})
 const typeMap = { 1: '填空', 2: '单选', 3: '多选', 4: '判断', 5: '简答', 6: '编程', 7: '综合' }
@@ -85,6 +93,13 @@ const typeMap = { 1: '填空', 2: '单选', 3: '多选', 4: '判断', 5: '简答
 function parseOptions(options) {
   if (!options) return []
   return options.includes('||') ? options.split('||') : options.split(',')
+}
+
+function getFillBlanks(itemId) {
+  if (!fillAnswers[itemId]) {
+    fillAnswers[itemId] = ['']
+  }
+  return fillAnswers[itemId]
 }
 
 function toggleAnswer(id) {
@@ -106,6 +121,8 @@ onMounted(async () => {
     answeredMap[item.excerciseItemId] = item.answered || false
     if (item.type === 3) {
       multiAnswers[item.excerciseItemId] = sa ? sa.split('') : []
+    } else if (item.type === 1 && sa) {
+      fillAnswers[item.excerciseItemId] = sa.split('|')
     } else if (sa) {
       answers[item.excerciseItemId] = sa
     }
@@ -116,6 +133,8 @@ async function submitAnswer(item) {
   let answer
   if (item.type === 3) {
     answer = (multiAnswers[item.excerciseItemId] || []).sort().join('')
+  } else if (item.type === 1) {
+    answer = (fillAnswers[item.excerciseItemId] || []).join('|')
   } else {
     answer = answers[item.excerciseItemId]
   }

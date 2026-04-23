@@ -86,6 +86,20 @@
         <el-form-item v-else-if="form.experimentItemType" label="参考答案">
           <el-input v-model="form.answer" type="textarea" :rows="2" />
         </el-form-item>
+        <!-- 附件上传 -->
+        <el-form-item v-if="form.experimentItemType === 5 || form.experimentItemType === 7" label="题目附件">
+          <el-upload
+            :action="`/api/teacher/experiments/items/${form.experimentItemId || 0}/attachment`"
+            :limit="1"
+            :on-success="onAttachmentSuccess"
+            :on-error="onAttachmentError"
+          >
+            <el-button size="small" type="primary">上传附件</el-button>
+            <template #tip>
+              <div class="el-upload__tip">综合题可上传附件材料</div>
+            </template>
+          </el-upload>
+        </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
@@ -214,4 +228,7 @@ async function handleDelete(id) {
   ElMessage.success('删除成功')
   loadData()
 }
+
+function onAttachmentSuccess() { ElMessage.success('附件上传成功'); loadData() }
+function onAttachmentError() { ElMessage.error('附件上传失败') }
 </script>

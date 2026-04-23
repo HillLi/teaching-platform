@@ -31,6 +31,8 @@ export default {
   updateItem(itemId, data) { return request.put(`/api/teacher/experiments/items/${itemId}`, data) },
   deleteItem(itemId) { return request.delete(`/api/teacher/experiments/items/${itemId}`) },
   setItemAnswer(itemId, answer) { return request.put(`/api/teacher/experiments/items/${itemId}/answer`, { answer }) },
+  uploadItemAttachment(itemId, formData) { return request.post(`/api/teacher/experiments/items/${itemId}/attachment`, formData, { headers: { 'Content-Type': 'multipart/form-data' } }) },
+  downloadStudentAnswerUrl(studentItemId) { return `/api/teacher/reports/items/${studentItemId}/download` },
 
   // Reports / Grading
   listSubmittedStudents(params) { return request.get('/api/teacher/reports/students', { params }) },
@@ -48,9 +50,31 @@ export default {
   addExercise(data) { return request.post('/api/teacher/exercises', data) },
   getExerciseItems(id) { return request.get(`/api/teacher/exercises/${id}/items`) },
   addExerciseItem(id, data) { return request.post(`/api/teacher/exercises/${id}/items`, data) },
+  updateExerciseItem(exerciseId, itemId, data) { return request.put(`/api/teacher/exercises/${exerciseId}/items/${itemId}`, data) },
+  deleteExerciseItem(exerciseId, itemId) { return request.delete(`/api/teacher/exercises/${exerciseId}/items/${itemId}`) },
   updateExercise(id, data) { return request.put(`/api/teacher/exercises/${id}`, data) },
   deleteExercise(id) { return request.delete(`/api/teacher/exercises/${id}`) },
   listQuestionTypes() { return request.get('/api/teacher/exercises/types') },
+  // Exercise grading
+  getExerciseSubmissions(id) { return request.get(`/api/teacher/exercises/${id}/submissions`) },
+  getExerciseSubmissionDetail(id, studentId) { return request.get(`/api/teacher/exercises/${id}/submissions/${studentId}`) },
+  submitExerciseScore(data) { return request.post('/api/teacher/exercises/scores', data) },
+  getExerciseScores(id) { return request.get(`/api/teacher/exercises/${id}/scores`) },
+
+  // Exams
+  listExams() { return request.get('/api/teacher/exams') },
+  addExam(data) { return request.post('/api/teacher/exams', data) },
+  updateExam(id, data) { return request.put(`/api/teacher/exams/${id}`, data) },
+  deleteExam(id) { return request.delete(`/api/teacher/exams/${id}`) },
+  getExamItems(id) { return request.get(`/api/teacher/exams/${id}/items`) },
+  addExamItem(id, data) { return request.post(`/api/teacher/exams/${id}/items`, data) },
+  updateExamItem(itemId, data) { return request.put(`/api/teacher/exams/items/${itemId}`, data) },
+  deleteExamItem(itemId) { return request.delete(`/api/teacher/exams/items/${itemId}`) },
+  // Exam grading
+  getExamSubmissions(id) { return request.get(`/api/teacher/exams/${id}/submissions`) },
+  getExamSubmissionDetail(id, studentId) { return request.get(`/api/teacher/exams/${id}/submissions/${studentId}`) },
+  submitExamScore(data) { return request.post('/api/teacher/exams/scores', data) },
+  getExamScores(id) { return request.get(`/api/teacher/exams/${id}/scores`) },
 
   // Dashboard
   dashboardStats() { return request.get('/api/teacher/dashboard/stats') },

@@ -22,6 +22,11 @@ const routes = [
       { path: 'class-report', name: 'ClassReport', component: () => import('../views/teacher/ClassReportView.vue') },
       { path: 'lectures', name: 'LectureList', component: () => import('../views/teacher/LectureListView.vue') },
       { path: 'exercises', name: 'ExerciseList', component: () => import('../views/teacher/ExerciseListView.vue') },
+      { path: 'exercise-grading/:id', name: 'ExerciseGrading', component: () => import('../views/teacher/ExerciseGradingView.vue') },
+      { path: 'exercise-scores/:id', name: 'ExerciseScores', component: () => import('../views/teacher/ExerciseScoreView.vue') },
+      { path: 'exams', name: 'ExamList', component: () => import('../views/teacher/ExamListView.vue') },
+      { path: 'exam-grading/:id', name: 'ExamGrading', component: () => import('../views/teacher/ExamGradingView.vue') },
+      { path: 'exam-scores/:id', name: 'ExamScores', component: () => import('../views/teacher/ExamScoreView.vue') },
       { path: 'logs', name: 'SysLogs', component: () => import('../views/teacher/SysLogView.vue') },
     ]
   },
@@ -37,6 +42,9 @@ const routes = [
       { path: 'password', name: 'StudentPassword', component: () => import('../views/student/PasswordView.vue') },
       { path: 'exercises', name: 'StudentExercises', component: () => import('../views/student/ExerciseListView.vue') },
       { path: 'exercises/:id', name: 'StudentExerciseDetail', component: () => import('../views/student/ExerciseView.vue') },
+      { path: 'exams', name: 'StudentExams', component: () => import('../views/student/ExamListView.vue') },
+      { path: 'exams/:id', name: 'StudentExamTake', component: () => import('../views/student/ExamTakeView.vue') },
+      { path: 'exams/:id/score', name: 'StudentExamScore', component: () => import('../views/student/ExamScoreView.vue') },
     ]
   },
   { path: '/', redirect: '/login' }

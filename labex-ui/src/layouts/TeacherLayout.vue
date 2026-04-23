@@ -29,6 +29,9 @@
         <el-menu-item index="/teacher/exercises">
           <el-icon><Notebook /></el-icon><span>作业管理</span>
         </el-menu-item>
+        <el-menu-item index="/teacher/exams">
+          <el-icon><Tickets /></el-icon><span>考试管理</span>
+        </el-menu-item>
         <el-menu-item index="/teacher/logs">
           <el-icon><Document /></el-icon><span>系统日志</span>
         </el-menu-item>

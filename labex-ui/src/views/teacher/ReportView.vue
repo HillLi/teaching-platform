@@ -15,6 +15,11 @@
       <el-table-column label="学生答案">
         <template #default="{ row }">
           <template v-if="!row.student_answer">(未作答)</template>
+          <template v-else-if="isFileSubmission(row.student_answer)">
+            <el-button type="primary" link size="small" @click="downloadFile(row)">
+              <el-icon><Download /></el-icon> 下载学生文件
+            </el-button>
+          </template>
           <template v-else-if="isShortAnswer(row.student_answer)">
             <div v-html="row.student_answer"></div>
           </template>
@@ -50,6 +55,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { Download } from '@element-plus/icons-vue'
 import api from '../../api/teacher'
 import { ElMessage } from 'element-plus'
 
@@ -64,10 +70,19 @@ function typeName(type) {
   return typeMap[type] || type
 }
 
-/** Strip HTML tags and check if the plain text is short enough to display inline */
 function isShortAnswer(html) {
   const text = html.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ')
   return text.length <= 80
+}
+
+function isFileSubmission(answer) {
+  return answer && answer.startsWith('[文件提交:')
+}
+
+function downloadFile(row) {
+  if (row.student_item_id) {
+    window.open(api.downloadStudentAnswerUrl(row.student_item_id), '_blank')
+  }
 }
 
 function openDetail(row) {
