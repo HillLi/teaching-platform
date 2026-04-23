@@ -196,7 +196,7 @@ public class ExamService {
 
     // ===== Student: Exam =====
 
-    public List<Exam> listAvailableExams(String clazzNo) {
+    public List<Map<String, Object>> listAvailableExams(String clazzNo, Integer studentId) {
         LocalDateTime now = LocalDateTime.now();
         List<ExamClazz> links = examClazzMapper.selectList(new QueryWrapper<>());
         Set<Integer> examIds = links.stream()
@@ -204,12 +204,37 @@ public class ExamService {
                 .map(ExamClazz::getExamId)
                 .collect(Collectors.toSet());
         if (examIds.isEmpty()) return Collections.emptyList();
-        return examMapper.selectList(
+        List<Exam> exams = examMapper.selectList(
                 new QueryWrapper<Exam>()
                         .in("id", examIds)
                         .le("start_time", now)
                         .ge("end_time", now)
                         .orderByAsc("start_time"));
+        List<ExamSubmission> submissions = examSubmissionMapper.selectList(
+                new QueryWrapper<ExamSubmission>()
+                        .eq("student_id", studentId)
+                        .in("exam_id", examIds));
+        Set<Integer> submittedIds = submissions.stream()
+                .filter(s -> s.getSubmitTime() != null)
+                .map(ExamSubmission::getExamId)
+                .collect(Collectors.toSet());
+        Set<Integer> startedIds = submissions.stream()
+                .map(ExamSubmission::getExamId)
+                .collect(Collectors.toSet());
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (Exam e : exams) {
+            Map<String, Object> map = new LinkedHashMap<>();
+            map.put("id", e.getId());
+            map.put("name", e.getName());
+            map.put("description", e.getDescription());
+            map.put("duration", e.getDuration());
+            map.put("startTime", e.getStartTime());
+            map.put("endTime", e.getEndTime());
+            map.put("submitted", submittedIds.contains(e.getId()));
+            map.put("started", startedIds.contains(e.getId()));
+            result.add(map);
+        }
+        return result;
     }
 
     public void startExam(Integer examId, Integer studentId) {

@@ -13,11 +13,14 @@
       <el-table-column label="结束时间" width="160">
         <template #default="{ row }">{{ formatTime(row.endTime) }}</template>
       </el-table-column>
-      <el-table-column label="操作" width="180">
+      <el-table-column label="操作" width="200">
         <template #default="{ row }">
-          <el-button size="small" type="primary" @click="startExam(row)" v-if="!startedMap[row.id]">开始考试</el-button>
-          <el-button size="small" @click="goToExam(row)" v-if="startedMap[row.id] && !submittedMap[row.id]">继续答题</el-button>
-          <el-button size="small" type="success" @click="viewScore(row)" v-if="submittedMap[row.id]">查看成绩</el-button>
+          <template v-if="row.submitted">
+            <el-tag type="success" size="small">已完成</el-tag>
+            <el-button size="small" type="success" @click="viewScore(row)" style="margin-left: 8px">查看成绩</el-button>
+          </template>
+          <el-button size="small" type="primary" @click="startExam(row)" v-else-if="!row.started">开始考试</el-button>
+          <el-button size="small" @click="goToExam(row)" v-else>继续答题</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -32,8 +35,6 @@ import { ElMessage } from 'element-plus'
 
 const router = useRouter()
 const exams = ref([])
-const startedMap = ref({})
-const submittedMap = ref({})
 
 function formatTime(t) { return t ? t.replace('T', ' ') : '-' }
 
@@ -45,7 +46,6 @@ onMounted(async () => {
 async function startExam(row) {
   try {
     await api.startExam(row.id)
-    startedMap.value[row.id] = true
     router.push(`/student/exams/${row.id}`)
   } catch (e) {
     ElMessage.error(e.response?.data?.message || '无法开始考试')
