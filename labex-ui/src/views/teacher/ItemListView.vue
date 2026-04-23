@@ -82,7 +82,28 @@
             <el-radio value="F">错误</el-radio>
           </el-radio-group>
         </el-form-item>
-        <!-- 填空/简答/编程/综合 -->
+        <!-- 填空 -->
+        <template v-else-if="form.experimentItemType === 1">
+          <el-form-item label="题目预览">
+            <div style="line-height: 2.2; font-size: 15px; padding: 8px 0">
+              <template v-for="(seg, si) in fillSegments" :key="si">
+                <span>{{ seg }}</span>
+                <span v-if="si < fillSegments.length - 1" style="border-bottom: 2px solid #409eff; padding: 0 20px; margin: 0 4px; color: #999; font-size: 12px">第{{ si + 1 }}空</span>
+              </template>
+            </div>
+          </el-form-item>
+          <el-form-item label="参考答案">
+            <div style="width: 100%">
+              <div v-for="(_, idx) in fillAnswers" :key="idx" style="display: flex; align-items: center; margin-bottom: 8px">
+                <span style="width: 60px; flex-shrink: 0; color: #409eff">第 {{ idx + 1 }} 空：</span>
+                <el-input v-model="fillAnswers[idx]" placeholder="输入该空的答案" style="flex: 1" />
+                <el-button v-if="fillAnswers.length > 1" size="small" type="danger" @click="fillAnswers.splice(idx, 1)" style="margin-left: 8px">删除</el-button>
+              </div>
+              <el-button size="small" @click="fillAnswers.push('')">增加空</el-button>
+            </div>
+          </el-form-item>
+        </template>
+        <!-- 简答/编程/综合 -->
         <el-form-item v-else-if="form.experimentItemType" label="参考答案">
           <el-input v-model="form.answer" type="textarea" :rows="2" />
         </el-form-item>
@@ -110,7 +131,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { Delete } from '@element-plus/icons-vue'
 import api from '../../api/teacher'
@@ -123,6 +144,13 @@ const dialogVisible = ref(false)
 const isEdit = ref(false)
 const form = ref({})
 const questionTypes = ref([])
+const fillAnswers = reactive([''])
+
+const fillSegments = computed(() => {
+  const text = form.value.experimentItemName || ''
+  if (!text) return ['']
+  return text.split(/_{2,}/)
+})
 
 onMounted(async () => {
   const res = await api.listQuestionTypes()
@@ -162,6 +190,8 @@ function showAddDialog() {
     answer: '',
     multiAnswer: []
   }
+  fillAnswers.length = 0
+  fillAnswers.push('')
   dialogVisible.value = true
 }
 
@@ -174,6 +204,12 @@ function editItem(row) {
     multiAnswer: (row.experimentItemType === 3) ? parseAnswerForMulti(row.experimentItemAnswer) : []
   }
   form.value = parsed
+  fillAnswers.length = 0
+  if (row.experimentItemType === 1 && row.experimentItemAnswer) {
+    row.experimentItemAnswer.split('|').forEach(p => fillAnswers.push(p))
+  } else {
+    fillAnswers.push('')
+  }
   dialogVisible.value = true
 }
 
@@ -198,15 +234,15 @@ async function handleSave() {
   }
 
   if (form.value.experimentItemType === 2) {
-    // 单选：选项逗号拼接存 content，答案为字母
     data.experimentItemContent = form.value.optionList.filter(o => o.trim()).join(',')
     data.experimentItemAnswer = form.value.answer
   } else if (form.value.experimentItemType === 3) {
-    // 多选
     data.experimentItemContent = form.value.optionList.filter(o => o.trim()).join(',')
     data.experimentItemAnswer = (form.value.multiAnswer || []).sort().join('')
+  } else if (form.value.experimentItemType === 1) {
+    data.experimentItemContent = form.value.experimentItemContent || ''
+    data.experimentItemAnswer = fillAnswers.join('|')
   } else {
-    // 填空/判断/简答/编程/综合
     data.experimentItemContent = form.value.experimentItemContent || ''
     data.experimentItemAnswer = form.value.answer || ''
   }

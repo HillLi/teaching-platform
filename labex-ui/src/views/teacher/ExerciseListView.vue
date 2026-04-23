@@ -79,11 +79,30 @@
             <el-option v-for="t in questionTypes" :key="t.typeId" :label="t.typeName" :value="t.typeId" />
           </el-select>
         </el-form-item>
-        <el-form-item label="题目"><el-input v-model="itemForm.question" type="textarea" :rows="2" /></el-form-item>
-        <!-- 填空题提示 -->
-        <el-alert v-if="itemForm.type === 1" type="info" :closable="false" style="margin-bottom: 12px">
-          多个空用 | 分隔，如：答案1|答案2|答案3
-        </el-alert>
+        <el-form-item label="题目">
+          <el-input v-model="itemForm.question" type="textarea" :rows="2" placeholder="用 ____ 标记空白处" />
+        </el-form-item>
+        <!-- 填空题预览和答案 -->
+        <template v-if="itemForm.type === 1">
+          <el-form-item label="题目预览">
+            <div style="line-height: 2.2; font-size: 15px; padding: 8px 0">
+              <template v-for="(seg, si) in exFillSegments" :key="si">
+                <span>{{ seg }}</span>
+                <span v-if="si < exFillSegments.length - 1" style="border-bottom: 2px solid #409eff; padding: 0 20px; margin: 0 4px; color: #999; font-size: 12px">第{{ si + 1 }}空</span>
+              </template>
+            </div>
+          </el-form-item>
+          <el-form-item label="正确答案">
+            <div style="width: 100%">
+              <div v-for="(_, idx) in exFillAnswers" :key="idx" style="display: flex; align-items: center; margin-bottom: 8px">
+                <span style="width: 60px; flex-shrink: 0; color: #409eff">第 {{ idx + 1 }} 空：</span>
+                <el-input v-model="exFillAnswers[idx]" placeholder="输入该空的答案" style="flex: 1" />
+                <el-button v-if="exFillAnswers.length > 1" size="small" type="danger" @click="exFillAnswers.splice(idx, 1)" style="margin-left: 8px">删除</el-button>
+              </div>
+              <el-button size="small" @click="exFillAnswers.push('')">增加空</el-button>
+            </div>
+          </el-form-item>
+        </template>
         <!-- 单选/多选：动态选项列表 -->
         <template v-if="itemForm.type === 2 || itemForm.type === 3">
           <el-form-item label="选项">
@@ -125,8 +144,8 @@
             <el-radio value="F">错误</el-radio>
           </el-radio-group>
         </el-form-item>
-        <!-- 填空/简答/编程/综合 -->
-        <el-form-item v-else label="答案">
+        <!-- 简答/编程/综合 -->
+        <el-form-item v-else-if="itemForm.type && itemForm.type !== 1" label="答案">
           <el-input v-model="itemForm.answer" type="textarea" :rows="2" />
         </el-form-item>
       </el-form>
@@ -146,7 +165,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { Delete } from '@element-plus/icons-vue'
 import api from '../../api/teacher'
@@ -164,6 +183,13 @@ const editingItem = ref(null)
 const items = ref([])
 const currentExId = ref(null)
 const itemForm = ref({ question: '', optionList: ['', ''], answer: '', multiAnswer: [], type: 2 })
+const exFillAnswers = reactive([''])
+
+const exFillSegments = computed(() => {
+  const text = itemForm.value.question || ''
+  if (!text) return ['']
+  return text.split(/_{2,}/)
+})
 const detailVisible = ref(false)
 const detailTitle = ref('')
 const detailContent = ref('')
@@ -236,6 +262,8 @@ function parseOptions(optionsStr) {
 function showAddItemDialog() {
   editingItem.value = null
   itemForm.value = { question: '', optionList: ['', ''], answer: '', multiAnswer: [], type: 2 }
+  exFillAnswers.length = 0
+  exFillAnswers.push('')
   addItemDialog.value = true
 }
 
@@ -249,6 +277,12 @@ function editItem(row) {
     multiAnswer: row.type === 3 ? (row.answer || '').split('') : []
   }
   itemForm.value = parsed
+  exFillAnswers.length = 0
+  if (row.type === 1 && row.answer) {
+    row.answer.split('|').forEach(p => exFillAnswers.push(p))
+  } else {
+    exFillAnswers.push('')
+  }
   addItemDialog.value = true
 }
 
@@ -282,6 +316,8 @@ async function saveItem() {
   } else if (itemForm.value.type === 3) {
     data.options = itemForm.value.optionList.filter(o => o.trim()).join(',')
     data.answer = (itemForm.value.multiAnswer || []).sort().join('')
+  } else if (itemForm.value.type === 1) {
+    data.answer = exFillAnswers.join('|')
   } else {
     data.answer = itemForm.value.answer
   }

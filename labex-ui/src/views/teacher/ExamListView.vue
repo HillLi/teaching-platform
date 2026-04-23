@@ -92,8 +92,29 @@
           </el-select>
         </el-form-item>
         <el-form-item label="题目">
-          <el-input v-model="itemForm.content" type="textarea" :rows="3" />
+          <el-input v-model="itemForm.content" type="textarea" :rows="3" placeholder="填空题用 ____ 标记空白处" />
         </el-form-item>
+        <!-- 填空题预览和答案 -->
+        <template v-if="itemForm.type === 1">
+          <el-form-item label="题目预览">
+            <div style="line-height: 2.2; font-size: 15px; padding: 8px 0">
+              <template v-for="(seg, si) in examFillSegments" :key="si">
+                <span>{{ seg }}</span>
+                <span v-if="si < examFillSegments.length - 1" style="border-bottom: 2px solid #409eff; padding: 0 20px; margin: 0 4px; color: #999; font-size: 12px">第{{ si + 1 }}空</span>
+              </template>
+            </div>
+          </el-form-item>
+          <el-form-item label="正确答案">
+            <div style="width: 100%">
+              <div v-for="(_, idx) in examFillAnswers" :key="idx" style="display: flex; align-items: center; margin-bottom: 8px">
+                <span style="width: 60px; flex-shrink: 0; color: #409eff">第 {{ idx + 1 }} 空：</span>
+                <el-input v-model="examFillAnswers[idx]" placeholder="输入该空的答案" style="flex: 1" />
+                <el-button v-if="examFillAnswers.length > 1" size="small" type="danger" @click="examFillAnswers.splice(idx, 1)" style="margin-left: 8px">删除</el-button>
+              </div>
+              <el-button size="small" @click="examFillAnswers.push('')">增加空</el-button>
+            </div>
+          </el-form-item>
+        </template>
         <el-form-item label="选项" v-if="itemForm.type === 2 || itemForm.type === 3">
           <div style="width: 100%">
             <div v-for="(opt, idx) in itemForm.optionList" :key="idx" style="display: flex; margin-bottom: 8px; align-items: center">
@@ -124,7 +145,7 @@
             <el-radio value="F">错误</el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-form-item label="答案" v-else-if="itemForm.type">
+        <el-form-item label="答案" v-else-if="itemForm.type && itemForm.type !== 1">
           <el-input v-model="itemForm.answer" type="textarea" :rows="2" />
         </el-form-item>
         <el-form-item label="分值">
@@ -147,7 +168,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../../api/teacher'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -165,6 +186,13 @@ const examItems = ref([])
 const currentExamId = ref(null)
 const currentExamName = ref('')
 const itemForm = ref({ content: '', type: 2, options: '', answer: '', score: 10, optionList: ['', ''], multiAnswer: [] })
+const examFillAnswers = reactive([''])
+
+const examFillSegments = computed(() => {
+  const text = itemForm.value.content || ''
+  if (!text) return ['']
+  return text.split(/_{2,}/)
+})
 const detailVisible = ref(false)
 const detailTitle = ref('')
 const detailContent = ref('')
@@ -241,6 +269,8 @@ async function viewItems(row) {
 function showAddItemDialog() {
   editingItem.value = null
   itemForm.value = { content: '', type: 2, options: '', answer: '', score: 10, optionList: ['', ''], multiAnswer: [] }
+  examFillAnswers.length = 0
+  examFillAnswers.push('')
   addItemDialog.value = true
 }
 
@@ -255,6 +285,12 @@ function editExamItem(row) {
     score: row.score || 10,
     optionList: opts,
     multiAnswer: row.type === 3 ? (row.answer || '').split('') : []
+  }
+  examFillAnswers.length = 0
+  if (row.type === 1 && row.answer) {
+    row.answer.split('|').forEach(p => examFillAnswers.push(p))
+  } else {
+    examFillAnswers.push('')
   }
   addItemDialog.value = true
 }
@@ -275,6 +311,8 @@ async function saveExamItem() {
   } else if (itemForm.value.type === 3) {
     data.options = itemForm.value.optionList.filter(o => o.trim()).join(',')
     data.answer = (itemForm.value.multiAnswer || []).sort().join('')
+  } else if (itemForm.value.type === 1) {
+    data.answer = examFillAnswers.join('|')
   } else {
     data.answer = itemForm.value.answer
   }
