@@ -7,6 +7,7 @@ import labex.dto.ExamSubmitDTO;
 import labex.dto.ExamSubmitItemDTO;
 import labex.entity.*;
 import labex.mapper.*;
+import labex.mapper.ExamClazzMapper;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -21,14 +22,17 @@ public class ExamService {
     private final ExamItemMapper examItemMapper;
     private final StudentExamAnswerMapper studentExamAnswerMapper;
     private final ExamSubmissionMapper examSubmissionMapper;
+    private final ExamClazzMapper examClazzMapper;
 
     public ExamService(ExamMapper examMapper, ExamItemMapper examItemMapper,
                        StudentExamAnswerMapper studentExamAnswerMapper,
-                       ExamSubmissionMapper examSubmissionMapper) {
+                       ExamSubmissionMapper examSubmissionMapper,
+                       ExamClazzMapper examClazzMapper) {
         this.examMapper = examMapper;
         this.examItemMapper = examItemMapper;
         this.studentExamAnswerMapper = studentExamAnswerMapper;
         this.examSubmissionMapper = examSubmissionMapper;
+        this.examClazzMapper = examClazzMapper;
     }
 
     // ===== Teacher: Exam CRUD =====
@@ -192,10 +196,17 @@ public class ExamService {
 
     // ===== Student: Exam =====
 
-    public List<Exam> listAvailableExams() {
+    public List<Exam> listAvailableExams(String clazzNo) {
         LocalDateTime now = LocalDateTime.now();
+        List<ExamClazz> links = examClazzMapper.selectList(new QueryWrapper<>());
+        Set<Integer> examIds = links.stream()
+                .filter(ec -> ec.getClazzNo().equals(clazzNo))
+                .map(ExamClazz::getExamId)
+                .collect(Collectors.toSet());
+        if (examIds.isEmpty()) return Collections.emptyList();
         return examMapper.selectList(
                 new QueryWrapper<Exam>()
+                        .in("id", examIds)
                         .le("start_time", now)
                         .ge("end_time", now)
                         .orderByAsc("start_time"));
@@ -335,5 +346,25 @@ public class ExamService {
         result.put("totalScore", sub.getTotalScore());
         result.put("status", sub.getStatus());
         return result;
+    }
+
+    // ===== Exam-Class Association =====
+
+    public List<String> getExamClasses(Integer examId) {
+        List<ExamClazz> links = examClazzMapper.selectList(
+                new QueryWrapper<ExamClazz>().eq("exam_id", examId));
+        return links.stream().map(ExamClazz::getClazzNo).collect(Collectors.toList());
+    }
+
+    public void setExamClasses(Integer examId, List<String> clazzNos) {
+        examClazzMapper.delete(new QueryWrapper<ExamClazz>().eq("exam_id", examId));
+        if (clazzNos != null) {
+            for (String clazzNo : clazzNos) {
+                ExamClazz ec = new ExamClazz();
+                ec.setExamId(examId);
+                ec.setClazzNo(clazzNo);
+                examClazzMapper.insert(ec);
+            }
+        }
     }
 }

@@ -46,6 +46,12 @@
           <el-date-picker v-model="form.endTime" type="datetime" placeholder="选择结束时间" style="width: 100%"
             value-format="YYYY-MM-DDTHH:mm:ss" />
         </el-form-item>
+        <el-form-item label="参加班级">
+          <el-select v-model="form.clazzNos" multiple placeholder="选择可参加的班级" style="width: 100%">
+            <el-option v-for="c in classes" :key="c.no" :label="c.no" :value="c.no" />
+          </el-select>
+          <div style="color: #999; font-size: 12px; margin-top: 4px">未选择班级则所有学生不可见</div>
+        </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
@@ -150,7 +156,8 @@ const router = useRouter()
 const exams = ref([])
 const dialogVisible = ref(false)
 const isEdit = ref(false)
-const form = ref({ name: '', description: '', duration: 60, startTime: '', endTime: '' })
+const form = ref({ name: '', description: '', duration: 60, startTime: '', endTime: '', clazzNos: [] })
+const classes = ref([])
 const itemDialogVisible = ref(false)
 const addItemDialog = ref(false)
 const editingItem = ref(null)
@@ -168,7 +175,11 @@ function truncate(text) { return !text ? '-' : text.length > 30 ? text.substring
 function showDetail(title, content) { detailTitle.value = title; detailContent.value = content; detailVisible.value = true }
 function formatTime(t) { return t ? t.replace('T', ' ') : '-' }
 
-onMounted(() => { loadData() })
+onMounted(async () => {
+  loadData()
+  const cRes = await api.listClasses()
+  classes.value = cRes.data
+})
 
 async function loadData() {
   const res = await api.listExams()
@@ -177,21 +188,35 @@ async function loadData() {
 
 function showAddDialog() {
   isEdit.value = false
-  form.value = { name: '', description: '', duration: 60, startTime: '', endTime: '' }
+  form.value = { name: '', description: '', duration: 60, startTime: '', endTime: '', clazzNos: [] }
   dialogVisible.value = true
 }
 
-function editExam(row) {
+async function editExam(row) {
   isEdit.value = true
-  form.value = { ...row, startTime: row.startTime ? row.startTime.replace(' ', 'T') : '', endTime: row.endTime ? row.endTime.replace(' ', 'T') : '' }
+  let clazzNos = []
+  try { const r = await api.getExamClasses(row.id); clazzNos = r.data } catch {}
+  form.value = {
+    ...row,
+    startTime: row.startTime ? row.startTime.replace(' ', 'T') : '',
+    endTime: row.endTime ? row.endTime.replace(' ', 'T') : '',
+    clazzNos
+  }
   dialogVisible.value = true
 }
 
 async function handleSave() {
+  let examId
   if (isEdit.value) {
-    await api.updateExam(form.value.id, form.value)
+    examId = form.value.id
+    await api.updateExam(examId, form.value)
   } else {
     await api.addExam(form.value)
+    const res = await api.listExams()
+    examId = res.data[0]?.id
+  }
+  if (examId && form.value.clazzNos) {
+    await api.setExamClasses(examId, form.value.clazzNos)
   }
   ElMessage.success('保存成功')
   dialogVisible.value = false

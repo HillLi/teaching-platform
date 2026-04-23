@@ -115,4 +115,19 @@ public class ExamController {
         verifyTeacher(session);
         return Result.ok(examService.getExamScores(id));
     }
+
+    @GetMapping("/{id}/classes")
+    public Result<List<String>> getExamClasses(@PathVariable Integer id, HttpSession session) {
+        verifyTeacher(session);
+        return Result.ok(examService.getExamClasses(id));
+    }
+
+    @PostMapping("/{id}/classes")
+    public Result<Void> setExamClasses(@PathVariable Integer id,
+                                        @RequestBody List<String> clazzNos,
+                                        HttpSession session) {
+        verifyTeacher(session);
+        examService.setExamClasses(id, clazzNos);
+        return Result.ok();
+    }
 }

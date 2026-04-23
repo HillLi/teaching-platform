@@ -181,8 +181,8 @@ public class StudentController {
 
     @GetMapping("/exams")
     public Result<List<Exam>> listExams(HttpSession session) {
-        verifyStudent(session);
-        return Result.ok(examService.listAvailableExams());
+        UserTokenVO token = verifyStudent(session);
+        return Result.ok(examService.listAvailableExams(token.getClazzNo()));
     }
 
     @PostMapping("/exams/{id}/start")

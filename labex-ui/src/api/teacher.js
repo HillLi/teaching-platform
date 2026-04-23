@@ -75,6 +75,9 @@ export default {
   getExamSubmissionDetail(id, studentId) { return request.get(`/api/teacher/exams/${id}/submissions/${studentId}`) },
   submitExamScore(data) { return request.post('/api/teacher/exams/scores', data) },
   getExamScores(id) { return request.get(`/api/teacher/exams/${id}/scores`) },
+  // Exam classes
+  getExamClasses(id) { return request.get(`/api/teacher/exams/${id}/classes`) },
+  setExamClasses(id, clazzNos) { return request.post(`/api/teacher/exams/${id}/classes`, clazzNos) },
 
   // Dashboard
   dashboardStats() { return request.get('/api/teacher/dashboard/stats') },
