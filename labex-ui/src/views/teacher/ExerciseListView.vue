@@ -1,7 +1,7 @@
 <template>
   <div>
     <div style="display: flex; justify-content: space-between; margin-bottom: 16px">
-      <h2>题库管理</h2>
+      <h2>作业管理</h2>
       <el-button type="primary" @click="showAddDialog">新增练习</el-button>
     </div>
     <el-table :data="exercises" border stripe>

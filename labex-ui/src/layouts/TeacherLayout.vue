@@ -27,7 +27,7 @@
           <el-icon><FolderOpened /></el-icon><span>课程资料</span>
         </el-menu-item>
         <el-menu-item index="/teacher/exercises">
-          <el-icon><Notebook /></el-icon><span>题库管理</span>
+          <el-icon><Notebook /></el-icon><span>作业管理</span>
         </el-menu-item>
         <el-menu-item index="/teacher/logs">
           <el-icon><Document /></el-icon><span>系统日志</span>
