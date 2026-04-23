@@ -5,7 +5,18 @@
       <el-button @click="$router.back()">返回题目列表</el-button>
     </div>
     <el-card style="margin-bottom: 16px">
-      <div v-html="item?.experimentItemContent || item?.experimentItemName || ''"></div>
+      <div v-if="itemType === 1" style="line-height: 2.2; font-size: 15px">
+        <template v-for="(segment, idx) in questionSegments" :key="idx">
+          <span>{{ segment }}</span>
+          <input v-if="idx < blankCount"
+            v-model="fillBlanks[idx]"
+            :disabled="graded"
+            class="inline-blank"
+            :placeholder="'第' + (idx+1) + '空'"
+          />
+        </template>
+      </div>
+      <div v-else v-html="item?.experimentItemContent || item?.experimentItemName || ''"></div>
     </el-card>
     <el-card>
       <h3 style="margin-top: 0">我的答案</h3>
@@ -54,20 +65,8 @@
           </template>
         </el-upload>
       </div>
-      <!-- 填空 type=1 -->
-      <div v-else-if="itemType === 1" style="margin-top: 8px; line-height: 2.2; font-size: 15px">
-        <template v-for="(segment, idx) in questionSegments" :key="idx">
-          <span>{{ segment }}</span>
-          <input v-if="idx < blankCount"
-            v-model="fillBlanks[idx]"
-            :disabled="graded"
-            class="inline-blank"
-            :placeholder="'第' + (idx+1) + '空'"
-          />
-        </template>
-      </div>
-      <!-- 其他 -->
-      <el-input v-else v-model="content" type="textarea" :rows="5" placeholder="请输入答案..." :disabled="graded" />
+      <!-- 其他（填空题已在上方内联输入） -->
+      <el-input v-else-if="itemType !== 1" v-model="content" type="textarea" :rows="5" placeholder="请输入答案..." :disabled="graded" />
       <div style="margin-top: 16px; display: flex; justify-content: space-between; align-items: center">
         <span style="color: #999; font-size: 12px">上次保存: {{ lastSaveTime || '未保存' }}</span>
         <div>

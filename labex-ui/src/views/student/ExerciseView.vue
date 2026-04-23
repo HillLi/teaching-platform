@@ -11,7 +11,17 @@
         <el-tag v-if="answeredMap[item.excerciseItemId]" type="success" size="small" style="margin-left: 8px">已答</el-tag>
         <el-tag v-else type="info" size="small" style="margin-left: 8px">未答</el-tag>
       </h3>
-      <div v-html="item.question"></div>
+      <div v-if="item.type === 1" style="line-height: 2.2; font-size: 15px">
+        <template v-for="(segment, si) in getQuestionSegments(item)" :key="si">
+          <span>{{ segment }}</span>
+          <input v-if="si < getBlankCount(item)"
+            v-model="getFillBlanks(item.excerciseItemId)[si]"
+            class="inline-blank"
+            :placeholder="'第' + (si+1) + '空'"
+          />
+        </template>
+      </div>
+      <div v-else v-html="item.question"></div>
       <!-- 单选 type=2 -->
       <div v-if="item.type === 2 && item.options" style="margin-top: 8px">
         <el-radio-group v-model="answers[item.excerciseItemId]">
@@ -45,19 +55,8 @@
       <div v-else-if="item.type === 5 || item.type === 7" style="margin-top: 8px">
         <RichTextEditor v-model="answers[item.excerciseItemId]" :height="250" />
       </div>
-      <!-- 填空 type=1 -->
-      <div v-else-if="item.type === 1" style="margin-top: 8px; line-height: 2.2; font-size: 15px">
-        <template v-for="(segment, si) in getQuestionSegments(item)" :key="si">
-          <span>{{ segment }}</span>
-          <input v-if="si < getBlankCount(item)"
-            v-model="getFillBlanks(item.excerciseItemId)[si]"
-            class="inline-blank"
-            :placeholder="'第' + (si+1) + '空'"
-          />
-        </template>
-      </div>
-      <!-- 其他 -->
-      <div v-else style="margin-top: 8px">
+      <!-- 填空 type=1: 答案已在题目区内联输入，无需额外输入框 -->
+      <div v-else-if="item.type !== 1" style="margin-top: 8px">
         <el-input v-model="answers[item.excerciseItemId]" type="textarea" :rows="3" placeholder="请输入答案..." />
       </div>
       <div style="margin-top: 8px">
