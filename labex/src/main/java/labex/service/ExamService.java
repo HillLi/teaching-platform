@@ -23,16 +23,19 @@ public class ExamService {
     private final StudentExamAnswerMapper studentExamAnswerMapper;
     private final ExamSubmissionMapper examSubmissionMapper;
     private final ExamClazzMapper examClazzMapper;
+    private final StudentMapper studentMapper;
 
     public ExamService(ExamMapper examMapper, ExamItemMapper examItemMapper,
                        StudentExamAnswerMapper studentExamAnswerMapper,
                        ExamSubmissionMapper examSubmissionMapper,
-                       ExamClazzMapper examClazzMapper) {
+                       ExamClazzMapper examClazzMapper,
+                       StudentMapper studentMapper) {
         this.examMapper = examMapper;
         this.examItemMapper = examItemMapper;
         this.studentExamAnswerMapper = studentExamAnswerMapper;
         this.examSubmissionMapper = examSubmissionMapper;
         this.examClazzMapper = examClazzMapper;
+        this.studentMapper = studentMapper;
     }
 
     // ===== Teacher: Exam CRUD =====
@@ -97,6 +100,10 @@ public class ExamService {
             Map<String, Object> m = new HashMap<>();
             m.put("id", sub.getId());
             m.put("studentId", sub.getStudentId());
+            Student student = studentMapper.selectById(sub.getStudentId());
+            m.put("studentName", student != null ? student.getStudentName() : "");
+            m.put("studentNo", student != null ? student.getStudentNo() : "");
+            m.put("clazzNo", student != null ? student.getClazzNo() : "");
             m.put("startTime", sub.getStartTime());
             m.put("submitTime", sub.getSubmitTime());
             m.put("totalScore", sub.getTotalScore());
@@ -135,9 +142,19 @@ public class ExamService {
         }).collect(Collectors.toList());
     }
 
-    public void submitExamScore(Integer answerId, Integer score) {
-        StudentExamAnswer ans = studentExamAnswerMapper.selectById(answerId);
-        if (ans == null) throw new BusinessException("学生答案不存在");
+    public void submitExamScore(Integer answerId, Integer examItemId, Integer studentId, Integer score) {
+        StudentExamAnswer ans;
+        if (answerId != null) {
+            ans = studentExamAnswerMapper.selectById(answerId);
+            if (ans == null) throw new BusinessException("学生答案不存在");
+        } else {
+            if (examItemId == null || studentId == null) throw new BusinessException("参数不完整");
+            ans = new StudentExamAnswer();
+            ans.setExamItemId(examItemId);
+            ans.setStudentId(studentId);
+            ans.setSubmitTime(LocalDateTime.now());
+            studentExamAnswerMapper.insert(ans);
+        }
         ans.setScore(score);
         ans.setAutoScored(0);
         studentExamAnswerMapper.updateById(ans);
@@ -187,6 +204,9 @@ public class ExamService {
         return submissions.stream().map(sub -> {
             Map<String, Object> m = new HashMap<>();
             m.put("studentId", sub.getStudentId());
+            Student student = studentMapper.selectById(sub.getStudentId());
+            m.put("studentName", student != null ? student.getStudentName() : "");
+            m.put("studentNo", student != null ? student.getStudentNo() : "");
             m.put("totalScore", sub.getTotalScore());
             m.put("status", sub.getStatus());
             m.put("submitTime", sub.getSubmitTime());

@@ -5,8 +5,15 @@
       <el-button @click="$router.back()">返回</el-button>
     </div>
 
-    <el-table :data="submissions" border stripe>
-      <el-table-column prop="studentId" label="学生ID" width="80" />
+    <div style="margin-bottom: 16px; display: flex; align-items: center; gap: 12px">
+      <span style="font-weight: 500">班级筛选：</span>
+      <el-select v-model="selectedClazz" placeholder="全部班级" clearable style="width: 200px" @change="onClazzChange">
+        <el-option v-for="c in examClasses" :key="c.clazzNo" :label="c.clazzNo" :value="c.clazzNo" />
+      </el-select>
+    </div>
+
+    <el-table :data="filteredSubmissions" border stripe>
+      <el-table-column prop="studentNo" label="学号" width="120" />
       <el-table-column prop="studentName" label="姓名" width="120" />
       <el-table-column label="提交状态" width="120">
         <template #default="{ row }">
@@ -27,7 +34,7 @@
     </el-table>
 
     <!-- 批改对话框 -->
-    <el-dialog v-model="gradingVisible" title="逐题批改" width="800">
+    <el-dialog v-model="gradingVisible" title="逐题批改" width="960">
       <el-table :data="detail" border>
         <el-table-column type="index" label="序号" width="60" />
         <el-table-column label="题目" min-width="120">
@@ -36,9 +43,26 @@
         <el-table-column label="类型" width="70">
           <template #default="{ row }">{{ typeMap[row.type] }}</template>
         </el-table-column>
-        <el-table-column prop="score" label="满分" width="60" />
-        <el-table-column label="学生答案" min-width="120">
-          <template #default="{ row }">{{ row.studentAnswer || '(未答)' }}</template>
+        <el-table-column prop="maxScore" label="满分" width="60" />
+        <el-table-column label="学生答案" min-width="160">
+          <template #default="{ row }">
+            <template v-if="getAnswerText(row)">
+              <span v-if="getAnswerText(row).length <= 50">{{ getAnswerText(row) }}</span>
+              <span v-else>
+                {{ getAnswerText(row).substring(0, 50) }}...
+                <el-popover placement="left" :width="480" trigger="click">
+                  <template #reference>
+                    <el-button type="primary" link size="small">详情</el-button>
+                  </template>
+                  <div style="max-height: 400px; overflow-y: auto; white-space: pre-wrap; word-break: break-all">{{ getAnswerText(row) }}</div>
+                </el-popover>
+              </span>
+            </template>
+            <span v-else style="color: #999">(未答)</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="正确答案" min-width="120">
+          <template #default="{ row }">{{ row.referenceAnswer || '-' }}</template>
         </el-table-column>
         <el-table-column label="自动评分" width="80">
           <template #default="{ row }">
@@ -48,7 +72,7 @@
         </el-table-column>
         <el-table-column label="评分" width="120">
           <template #default="{ row }">
-            <el-input-number v-model="row.currentScore" :min="0" :max="row.score" size="small" />
+            <el-input-number v-model="row.currentScore" :min="0" :max="row.maxScore" size="small" />
           </template>
         </el-table-column>
       </el-table>
@@ -61,7 +85,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import api from '../../api/teacher'
 import { ElMessage } from 'element-plus'
@@ -70,20 +94,34 @@ const route = useRoute()
 const examId = route.params.id
 const examName = ref('')
 const submissions = ref([])
+const selectedClazz = ref('')
+const examClasses = ref([])
 const gradingVisible = ref(false)
 const detail = ref([])
 const currentStudentId = ref(null)
 const statusMap = { 0: '未提交', 1: '待批改', 2: '已批改' }
 const typeMap = { 1: '填空', 2: '单选', 3: '多选', 4: '判断', 5: '简答', 6: '编程', 7: '综合' }
 
+const filteredSubmissions = computed(() => {
+  if (!selectedClazz.value) return submissions.value
+  return submissions.value.filter(s => s.clazzNo === selectedClazz.value)
+})
+
 function truncate(text) { return !text ? '-' : text.length > 40 ? text.substring(0, 40) + '...' : text }
 function formatTime(t) { return t ? t.replace('T', ' ') : '-' }
+function getAnswerText(row) { return row.studentAnswer || row.studentContent || '' }
+function onClazzChange() { /* filteredSubmissions auto-updates via computed */ }
 
 onMounted(async () => {
   const exams = (await api.listExams()).data
   const exam = exams.find(e => e.id === Number(examId))
   examName.value = exam ? exam.name : ''
-  loadData()
+  const [subRes, classRes] = await Promise.all([
+    api.getExamSubmissions(examId),
+    api.getExamClasses(examId)
+  ])
+  submissions.value = subRes.data
+  examClasses.value = classRes.data.map(no => ({ clazzNo: no }))
 })
 
 async function loadData() {
@@ -100,7 +138,12 @@ async function gradeStudent(row) {
 
 async function saveGrading() {
   for (const item of detail.value) {
-    await api.submitExamScore({ answerId: item.answerId, score: item.currentScore })
+    await api.submitExamScore({
+      answerId: item.answerId,
+      examItemId: item.itemId,
+      studentId: currentStudentId.value,
+      score: item.currentScore
+    })
   }
   ElMessage.success('评分已提交')
   gradingVisible.value = false

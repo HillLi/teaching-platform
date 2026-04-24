@@ -104,9 +104,11 @@ public class ExamController {
     @PostMapping("/scores")
     public Result<Void> submitScore(@RequestBody Map<String, Object> body, HttpSession session) {
         verifyTeacher(session);
-        Integer answerId = (Integer) body.get("answerId");
-        Integer score = (Integer) body.get("score");
-        examService.submitExamScore(answerId, score);
+        Integer answerId = body.get("answerId") != null ? ((Number) body.get("answerId")).intValue() : null;
+        Integer examItemId = body.get("examItemId") != null ? ((Number) body.get("examItemId")).intValue() : null;
+        Integer studentId = body.get("studentId") != null ? ((Number) body.get("studentId")).intValue() : null;
+        Integer score = body.get("score") != null ? ((Number) body.get("score")).intValue() : null;
+        examService.submitExamScore(answerId, examItemId, studentId, score);
         return Result.ok();
     }
 
