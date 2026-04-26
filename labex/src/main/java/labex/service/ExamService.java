@@ -155,8 +155,14 @@ public class ExamService {
             ans.setSubmitTime(LocalDateTime.now());
             studentExamAnswerMapper.insert(ans);
         }
+        Integer originalScore = ans.getScore();
         ans.setScore(score);
-        ans.setAutoScored(0);
+        boolean wasAutoScored = ans.getAutoScored() != null && ans.getAutoScored() == 1;
+        if (wasAutoScored && originalScore != null && originalScore.equals(score)) {
+            // Teacher confirmed auto-score unchanged, keep autoScored=1
+        } else {
+            ans.setAutoScored(0);
+        }
         studentExamAnswerMapper.updateById(ans);
 
         ExamItem item = examItemMapper.selectById(ans.getExamItemId());

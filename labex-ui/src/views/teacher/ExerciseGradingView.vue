@@ -20,13 +20,50 @@
       <el-table :data="detail" border>
         <el-table-column type="index" label="序号" width="60" />
         <el-table-column label="题目" min-width="120">
-          <template #default="{ row }">{{ truncate(row.question) }}</template>
+          <template #default="{ row }">
+            <template v-if="row.type === 1">
+              <div style="line-height: 2.2; font-size: 14px">
+                <template v-for="(seg, si) in getSegments(row.question)" :key="si">
+                  <span>{{ seg }}</span>
+                  <span v-if="si < getSegments(row.question).length - 1"
+                    style="border-bottom: 2px solid #409eff; padding: 0 20px; margin: 0 4px; color: #999; font-size: 12px">第{{ si + 1 }}空</span>
+                </template>
+              </div>
+            </template>
+            <span v-else>{{ truncate(row.question) }}</span>
+          </template>
         </el-table-column>
         <el-table-column label="类型" width="70">
           <template #default="{ row }">{{ typeMap[row.type] }}</template>
         </el-table-column>
         <el-table-column label="学生答案" min-width="120">
-          <template #default="{ row }">{{ row.studentAnswer || '(未答)' }}</template>
+          <template #default="{ row }">
+            <template v-if="row.type === 1">
+              <div style="width: 100%">
+                <div v-for="(ans, idx) in getBlankAnswers(row.studentAnswer, getBlankCount(row.question))" :key="idx"
+                  style="display: flex; align-items: center; margin-bottom: 4px">
+                  <span style="width: 50px; flex-shrink: 0; color: #409eff; font-size: 12px">第{{ idx + 1 }}空：</span>
+                  <span v-if="ans" style="border-bottom: 1px solid #333; padding: 0 4px">{{ ans }}</span>
+                  <span v-else style="color: #999">(未填)</span>
+                </div>
+              </div>
+            </template>
+            <template v-else>{{ row.studentAnswer || '(未答)' }}</template>
+          </template>
+        </el-table-column>
+        <el-table-column label="正确答案" min-width="120">
+          <template #default="{ row }">
+            <template v-if="row.type === 1">
+              <div style="width: 100%">
+                <div v-for="(ans, idx) in getBlankAnswers(row.answer, getBlankCount(row.question))" :key="idx"
+                  style="display: flex; align-items: center; margin-bottom: 4px">
+                  <span style="width: 50px; flex-shrink: 0; color: #67c23a; font-size: 12px">第{{ idx + 1 }}空：</span>
+                  <span>{{ ans || '-' }}</span>
+                </div>
+              </div>
+            </template>
+            <span v-else>{{ row.answer || '-' }}</span>
+          </template>
         </el-table-column>
         <el-table-column label="自动评分" width="80">
           <template #default="{ row }">
@@ -68,6 +105,13 @@ const currentStudentId = ref(null)
 const typeMap = { 1: '填空', 2: '单选', 3: '多选', 4: '判断', 5: '简答', 6: '编程', 7: '综合' }
 
 function truncate(text) { return !text ? '-' : text.length > 40 ? text.substring(0, 40) + '...' : text }
+function getSegments(content) { return content ? content.split(/_{2,}/) : [''] }
+function getBlankCount(content) { return Math.max(getSegments(content).length - 1, 0) }
+function getBlankAnswers(pipedAnswer, blankCount) {
+  if (!blankCount) return []
+  const parts = pipedAnswer ? pipedAnswer.split('|') : []
+  return Array.from({ length: blankCount }, (_, i) => (i < parts.length ? parts[i].trim() : '') || null)
+}
 
 onMounted(async () => {
   const exercises = (await api.listExercises()).data

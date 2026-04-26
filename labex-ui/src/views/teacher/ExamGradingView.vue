@@ -38,7 +38,18 @@
       <el-table :data="detail" border>
         <el-table-column type="index" label="序号" width="60" />
         <el-table-column label="题目" min-width="120">
-          <template #default="{ row }">{{ truncate(row.content) }}</template>
+          <template #default="{ row }">
+            <template v-if="row.type === 1">
+              <div style="line-height: 2.2; font-size: 14px">
+                <template v-for="(seg, si) in getSegments(row.content)" :key="si">
+                  <span>{{ seg }}</span>
+                  <span v-if="si < getSegments(row.content).length - 1"
+                    style="border-bottom: 2px solid #409eff; padding: 0 20px; margin: 0 4px; color: #999; font-size: 12px">第{{ si + 1 }}空</span>
+                </template>
+              </div>
+            </template>
+            <span v-else>{{ truncate(row.content) }}</span>
+          </template>
         </el-table-column>
         <el-table-column label="类型" width="70">
           <template #default="{ row }">{{ typeMap[row.type] }}</template>
@@ -46,7 +57,17 @@
         <el-table-column prop="maxScore" label="满分" width="60" />
         <el-table-column label="学生答案" min-width="160">
           <template #default="{ row }">
-            <template v-if="getAnswerText(row)">
+            <template v-if="row.type === 1">
+              <div style="width: 100%">
+                <div v-for="(ans, idx) in getBlankAnswers(row.studentAnswer, getBlankCount(row.content))" :key="idx"
+                  style="display: flex; align-items: center; margin-bottom: 4px">
+                  <span style="width: 50px; flex-shrink: 0; color: #409eff; font-size: 12px">第{{ idx + 1 }}空：</span>
+                  <span v-if="ans" style="border-bottom: 1px solid #333; padding: 0 4px">{{ ans }}</span>
+                  <span v-else style="color: #999">(未填)</span>
+                </div>
+              </div>
+            </template>
+            <template v-else-if="getAnswerText(row)">
               <span v-if="getAnswerText(row).length <= 50">{{ getAnswerText(row) }}</span>
               <span v-else>
                 {{ getAnswerText(row).substring(0, 50) }}...
@@ -62,7 +83,18 @@
           </template>
         </el-table-column>
         <el-table-column label="正确答案" min-width="120">
-          <template #default="{ row }">{{ row.referenceAnswer || '-' }}</template>
+          <template #default="{ row }">
+            <template v-if="row.type === 1">
+              <div style="width: 100%">
+                <div v-for="(ans, idx) in getBlankAnswers(row.referenceAnswer, getBlankCount(row.content))" :key="idx"
+                  style="display: flex; align-items: center; margin-bottom: 4px">
+                  <span style="width: 50px; flex-shrink: 0; color: #67c23a; font-size: 12px">第{{ idx + 1 }}空：</span>
+                  <span>{{ ans || '-' }}</span>
+                </div>
+              </div>
+            </template>
+            <span v-else>{{ row.referenceAnswer || '-' }}</span>
+          </template>
         </el-table-column>
         <el-table-column label="自动评分" width="80">
           <template #default="{ row }">
@@ -111,6 +143,13 @@ function truncate(text) { return !text ? '-' : text.length > 40 ? text.substring
 function formatTime(t) { return t ? t.replace('T', ' ') : '-' }
 function getAnswerText(row) { return row.studentAnswer || row.studentContent || '' }
 function onClazzChange() { /* filteredSubmissions auto-updates via computed */ }
+function getSegments(content) { return content ? content.split(/_{2,}/) : [''] }
+function getBlankCount(content) { return Math.max(getSegments(content).length - 1, 0) }
+function getBlankAnswers(pipedAnswer, blankCount) {
+  if (!blankCount) return []
+  const parts = pipedAnswer ? pipedAnswer.split('|') : []
+  return Array.from({ length: blankCount }, (_, i) => (i < parts.length ? parts[i].trim() : '') || null)
+}
 
 onMounted(async () => {
   const exams = (await api.listExams()).data
@@ -132,7 +171,7 @@ async function loadData() {
 async function gradeStudent(row) {
   currentStudentId.value = row.studentId
   const res = await api.getExamSubmissionDetail(examId, row.studentId)
-  detail.value = res.data
+  detail.value = res.data.map(item => ({ ...item, currentScore: item.score ?? 0 }))
   gradingVisible.value = true
 }
 

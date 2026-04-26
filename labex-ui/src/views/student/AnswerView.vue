@@ -105,7 +105,7 @@ const uploadUrl = `/api/student/items/${itemId}/upload`
 const questionSegments = computed(() => {
   const text = item.value?.experimentItemName || item.value?.experimentItemContent || ''
   if (!text || itemType.value !== 1) return [text || '']
-  return text.split(/_{2,}/)
+  return text.split(/_+/)
 })
 const blankCount = computed(() => Math.max(questionSegments.value.length - 1, 1))
 

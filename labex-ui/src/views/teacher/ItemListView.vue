@@ -31,7 +31,7 @@
           <el-input-number v-model="form.experimentItemNo" :min="1" />
         </el-form-item>
         <el-form-item label="题目">
-          <el-input v-model="form.experimentItemName" type="textarea" :rows="2" />
+          <el-input v-model="form.experimentItemName" type="textarea" :rows="2" :placeholder="form.experimentItemType === 1 ? '填空题用 ____ 标记空白处' : ''" />
         </el-form-item>
         <el-form-item label="题型">
           <el-select v-model="form.experimentItemType" style="width: 100%" @change="onTypeChange">
@@ -149,7 +149,7 @@ const fillAnswers = reactive([''])
 const fillSegments = computed(() => {
   const text = form.value.experimentItemName || ''
   if (!text) return ['']
-  return text.split(/_{2,}/)
+  return text.split(/_+/)
 })
 
 onMounted(async () => {
